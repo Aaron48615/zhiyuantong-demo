@@ -1,0 +1,35 @@
+{
+  "name": "zhiyuantong",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n web,api \"vite --host 127.0.0.1\" \"tsx watch --env-file-if-exists=.env server/index.ts\"",
+    "dev:web": "vite --host 127.0.0.1",
+    "dev:api": "tsx watch --env-file-if-exists=.env server/index.ts",
+    "build": "vue-tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "vitest run",
+    "data:generate": "tsx scripts/generate-data.ts"
+  },
+  "dependencies": {
+    "axios": "1.20.0",
+    "echarts": "6.1.0",
+    "pinia": "4.0.3",
+    "vue": "3.5.43",
+    "vue-router": "5.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "26.6.4",
+    "@vitejs/plugin-vue": "6.0.9",
+    "concurrently": "10.0.5",
+    "tsx": "4.23.15",
+    "typescript": "5.9.3",
+    "vite": "8.3.2",
+    "vitest": "5.0.3",
+    "vue-tsc": "3.3.12"
+  }
+}
