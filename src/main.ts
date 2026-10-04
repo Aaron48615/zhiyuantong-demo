@@ -46,7 +46,7 @@ const router = createRouter({
     { path: "/:pathMatch(.*)*", redirect: "/" },
   ],
 });
-router.afterEach((to) => {
-  document.title = `${String(to.meta.title)} · 智愿通`;
+router.afterEach(() => {
+  document.title = "智愿通";
 });
 createApp(App).use(createPinia()).use(router).mount("#app");
