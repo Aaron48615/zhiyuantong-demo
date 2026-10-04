@@ -38,15 +38,15 @@ let observer: ResizeObserver | undefined;
 function render() {
   const option: EChartsCoreOption = {
     color: [
-      "#27634c",
-      "#608579",
-      "#9eb9ac",
-      "#c4d4cc",
-      "#ddb882",
-      "#ad916e",
-      "#718ba6",
-      "#9baec1",
-      "#d5dde4",
+      "#142a4a",
+      "#2563eb",
+      "#6096ce",
+      "#9cbce0",
+      "#c3d7eb",
+      "#748198",
+      "#a18b6b",
+      "#c8b89d",
+      "#d9dfe7",
     ],
     animation: false,
     aria: { enabled: true },
@@ -56,7 +56,7 @@ function render() {
     option.radar = {
       indicator: props.labels.map((name) => ({ name, max: 100 })),
       radius: "58%",
-      axisName: { fontSize: 11, color: "#53605a" },
+      axisName: { fontSize: 11, color: "#4b5563" },
     };
     option.series = [
       {

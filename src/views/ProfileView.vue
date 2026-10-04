@@ -33,6 +33,14 @@ const advancedTotal = computed(() =>
     0,
   ),
 );
+const selectedPreset = computed(
+  () =>
+    PRESETS.find((item) =>
+      WEIGHT_FIELDS.every(
+        (field) => item.weights[field.key] === draft.weights[field.key],
+      ),
+    )?.name,
+);
 function changeWeight(key: WeightKey, value: number) {
   draft.weights = updateWeight(draft.weights, key, value);
 }
@@ -86,7 +94,7 @@ function reset() {
       </ul>
     </div>
     <section class="panel">
-      <div class="row between">
+      <div class="row between section-heading">
         <h2>考生基本信息</h2>
         <button class="text-button" type="button" @click="reset">
           使用示例档案
@@ -114,7 +122,7 @@ function reset() {
             max="100000"
             inputmode="numeric"
             placeholder="不确定可以留空"
-          /><small v-if="range"
+          /><small v-if="range" class="rank-hint"
             >官方同分区间参考：{{ range.start.toLocaleString() }}—{{
               range.end.toLocaleString()
             }}</small
@@ -122,9 +130,14 @@ function reset() {
         >
       </div>
       <fieldset>
-        <legend>选考科目 <span class="required">选择 3 门</span></legend>
-        <div class="chips">
-          <label v-for="subject in SUBJECTS" :key="subject" class="check-chip"
+        <legend>
+          选考科目 <span class="required">选择 3 门</span
+          ><span class="selection-count"
+            >已选 {{ draft.subjects.length }}/3 门</span
+          >
+        </legend>
+        <div class="subject-grid">
+          <label v-for="subject in SUBJECTS" :key="subject" class="subject-chip"
             ><input
               v-model="draft.subjects"
               type="checkbox"
@@ -132,7 +145,7 @@ function reset() {
               :disabled="
                 draft.subjects.length >= 3 && !draft.subjects.includes(subject)
               "
-            />{{ subject }}</label
+            /><span>{{ subject }}</span></label
           >
         </div>
       </fieldset>
@@ -146,8 +159,20 @@ function reset() {
               v-model="draft.majorNames"
               type="checkbox"
               :value="name"
-            />{{ name }}</label
+            /><span>{{ name }}</span></label
           >
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>
+          想去的省市
+          <span class="muted small">作为偏好，不强制排除其他地区</span>
+        </legend>
+        <div class="chips">
+          <label v-for="region in REGIONS" :key="region" class="check-chip">
+            <input v-model="draft.regions" type="checkbox" :value="region" />
+            <span>{{ region }}</span>
+          </label>
         </div>
       </fieldset>
     </section>
@@ -163,24 +188,12 @@ function reset() {
           :key="item.name"
           type="button"
           class="secondary small-button"
+          :aria-pressed="selectedPreset === item.name"
           @click="preset(item.weights)"
         >
           {{ item.name }}
         </button>
       </div>
-      <fieldset>
-        <legend>
-          想去的省市
-          <span class="muted small">作为偏好，不强制排除其他地区</span>
-        </legend>
-        <div class="chips">
-          <label v-for="region in REGIONS" :key="region" class="check-chip"
-            ><input v-model="draft.regions" type="checkbox" :value="region" />{{
-              region
-            }}</label
-          >
-        </div>
-      </fieldset>
       <label class="compact-field"
         >城市类别<select v-model="draft.cityTier">
           <option>不限</option>
@@ -210,10 +223,10 @@ function reset() {
         @click="advanced = !advanced"
       >
         <span
-          ><strong>进阶设置</strong
-          ><small
-            >就业、考公考编、创新与费用 · 当前共 {{ advancedTotal }}%</small
-          ></span
+          ><span class="advanced-title"
+            ><strong>进阶设置</strong
+            ><span class="weight-badge">当前共 {{ advancedTotal }}%</span></span
+          ><small>就业、考公考编、创新与费用</small></span
         ><span aria-hidden="true">{{ advanced ? "收起 −" : "展开 +" }}</span>
       </button>
       <div v-if="advanced" id="advanced-settings" class="advanced-content">
@@ -243,9 +256,10 @@ function reset() {
       </div>
     </section>
     <div class="form-submit">
-      <span
-        >九项权重合计 <strong>{{ total }}%</strong></span
-      ><button type="submit">保存并查看推荐 →</button>
+      <div class="submit-summary">
+        九项权重合计 <strong>{{ total }}%</strong>
+      </div>
+      <button type="submit">保存并查看推荐 →</button>
     </div>
   </form>
 </template>

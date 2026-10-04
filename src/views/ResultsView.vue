@@ -69,19 +69,18 @@ const visible = computed(() => filtered.value.slice(0, page.value * 20));
 </script>
 <template>
   <div class="page-heading">
-    <div class="row between">
-      <div>
-        <p class="eyebrow">第二步 / 查看与筛选</p>
-        <h1>适合你的选择</h1>
-      </div>
-      <RouterLink class="button secondary" to="/profile">调整偏好</RouterLink>
-    </div>
-    <p class="muted">
-      {{ planner.hasProfile ? "当前档案" : "示例档案" }}：{{
-        planner.summary
-      }}
-      · 先满足选科，再按偏好匹配排序
+    <p class="eyebrow">第二步 / 查看与筛选</p>
+    <h1>适合你的选择</h1>
+    <p class="muted">先满足选科要求，再按你的九项偏好匹配排序。</p>
+  </div>
+  <div class="profile-summary">
+    <p>
+      <span class="muted"
+        >{{ planner.hasProfile ? "当前档案" : "示例档案" }}：</span
+      ><strong>{{ planner.profile.score }} 分</strong> ·
+      {{ planner.profile.subjects.join(" / ") }}
     </p>
+    <RouterLink class="text-button" to="/profile">调整偏好 →</RouterLink>
   </div>
   <div class="notice">
     本页的专业设置、匹配分和风险分档均使用模拟数据。偏好匹配高，不代表录取机会高。<span
@@ -90,46 +89,51 @@ const visible = computed(() => filtered.value.slice(0, page.value * 20));
       当前使用本地演示计算，API 服务未连接。</span
     >
   </div>
-  <section class="panel filters" aria-label="筛选推荐">
-    <label
-      >搜索学校或专业<input
-        v-model="query"
-        type="search"
-        placeholder="例如：上海大学、软件工程"
-    /></label>
-    <label
-      >风险分档<select v-model="risk">
-        <option>全部</option>
-        <option>冲</option>
-        <option>稳</option>
-        <option>保</option>
-        <option>数据不足</option>
-      </select></label
-    >
-    <label
-      >排序方式<select v-model="order">
-        <option value="match">偏好匹配优先</option>
-        <option value="cost">年费用从低到高</option>
-        <optgroup label="学校维度">
-          <option
-            v-for="(label, i) in SCHOOL_DIMENSIONS"
-            :key="label"
-            :value="`school-${i}`"
-          >
-            {{ label }}优先
-          </option>
-        </optgroup>
-        <optgroup label="专业维度">
-          <option
-            v-for="(label, i) in MAJOR_DIMENSIONS"
-            :key="label"
-            :value="`major-${i}`"
-          >
-            {{ label }}优先
-          </option>
-        </optgroup>
-      </select></label
-    >
+  <section class="filters" aria-label="筛选推荐">
+    <div class="filter-controls">
+      <label
+        >搜索学校或专业<input
+          v-model="query"
+          type="search"
+          placeholder="例如：上海大学、软件工程"
+      /></label>
+      <label
+        >排序方式<select v-model="order">
+          <option value="match">偏好匹配优先</option>
+          <option value="cost">年费用从低到高</option>
+          <optgroup label="学校维度">
+            <option
+              v-for="(label, i) in SCHOOL_DIMENSIONS"
+              :key="label"
+              :value="`school-${i}`"
+            >
+              {{ label }}优先
+            </option>
+          </optgroup>
+          <optgroup label="专业维度">
+            <option
+              v-for="(label, i) in MAJOR_DIMENSIONS"
+              :key="label"
+              :value="`major-${i}`"
+            >
+              {{ label }}优先
+            </option>
+          </optgroup>
+        </select></label
+      >
+    </div>
+    <div class="risk-filters" role="group" aria-label="风险分档">
+      <button
+        v-for="value in ['全部', '冲', '稳', '保', '数据不足']"
+        :key="value"
+        type="button"
+        class="risk-filter"
+        :aria-pressed="risk === value"
+        @click="risk = value"
+      >
+        {{ value }}
+      </button>
+    </div>
   </section>
   <div v-if="loading" class="empty-state" role="status">正在生成推荐…</div>
   <div v-else-if="error" class="empty-state">
@@ -141,9 +145,7 @@ const visible = computed(() => filtered.value.slice(0, page.value * 20));
       <p>
         共 <strong>{{ filtered.length }}</strong> 个学校与专业组合
       </p>
-      <RouterLink v-if="planner.compareIds.length" to="/compare"
-        >查看对比（{{ planner.compareIds.length }}/3）→</RouterLink
-      >
+      <span class="muted">每次展示 20 项</span>
     </div>
     <div v-if="!filtered.length" class="empty-state">
       <h2>没有符合当前条件的样本</h2>
@@ -167,4 +169,14 @@ const visible = computed(() => filtered.value.slice(0, page.value * 20));
       </button>
     </div>
   </template>
+  <aside
+    v-if="planner.compareIds.length"
+    class="compare-dock"
+    aria-label="已选对比"
+  >
+    <span
+      >已选对比 <strong>{{ planner.compareIds.length }}</strong> / 3 项</span
+    >
+    <RouterLink class="button" to="/compare">查看对比 →</RouterLink>
+  </aside>
 </template>

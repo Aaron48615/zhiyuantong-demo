@@ -7,6 +7,7 @@ defineEmits<{ change: [value: number] }>();
     <label :for="id"
       >{{ label }} <strong>{{ value }}%</strong></label
     >
+    <small :id="`${id}-hint`">{{ hint }}</small>
     <input
       :id="id"
       type="range"
@@ -14,11 +15,11 @@ defineEmits<{ change: [value: number] }>();
       max="100"
       step="1"
       :value="value"
+      :style="{ '--weight-progress': `${value}%` }"
       :aria-describedby="`${id}-hint`"
       @input="
         $emit('change', Number(($event.target as HTMLInputElement).value))
       "
     />
-    <small :id="`${id}-hint`">{{ hint }}</small>
   </div>
 </template>

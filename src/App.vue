@@ -11,19 +11,24 @@ const mainContent = ref<HTMLElement>();
   >
   <header class="site-header">
     <div class="header-inner">
-      <RouterLink class="brand" to="/"
-        >智愿通 <span>上海本科 · 2026 演示</span></RouterLink
-      >
+      <RouterLink class="brand" to="/">
+        <span class="brand-symbol" aria-hidden="true">智</span>
+        <span class="brand-name"
+          >智愿通<small>上海本科 · 2026 演示</small></span
+        >
+      </RouterLink>
       <nav aria-label="主导航">
         <RouterLink to="/profile">档案</RouterLink>
         <RouterLink to="/recommendations">选专业</RouterLink>
         <RouterLink to="/compare"
-          >对比<span v-if="planner.compareIds.length">
+          >对比<span v-if="planner.compareIds.length" class="nav-count">
             {{ planner.compareIds.length }}</span
           ></RouterLink
         >
         <RouterLink to="/saved"
-          >候选 {{ planner.savedIds.length || "" }}</RouterLink
+          >候选<span v-if="planner.savedIds.length" class="nav-count">{{
+            planner.savedIds.length
+          }}</span></RouterLink
         >
         <RouterLink to="/assistant">问助手</RouterLink>
       </nav>
