@@ -21,7 +21,8 @@ export interface Profile {
   cityTier: string;
   majorNames: string[];
   budget: number;
-  weights: Weights;
+  preferences: Weights;
+  advancedEnabled: boolean;
 }
 export interface School {
   id: string;

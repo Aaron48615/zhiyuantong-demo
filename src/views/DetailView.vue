@@ -96,7 +96,7 @@ const item = computed(() =>
         </p>
         <p class="muted small">{{ item.riskReason }}</p>
         <details>
-          <summary>查看九项权重的完整计算</summary>
+          <summary>查看偏好权重的完整计算</summary>
           <div class="table-scroll">
             <table>
               <thead>
@@ -111,7 +111,7 @@ const item = computed(() =>
                 <tr v-for="factor in item.factors" :key="factor.key">
                   <td>{{ factor.label }}</td>
                   <td>{{ factor.value.toFixed(1) }}</td>
-                  <td>{{ factor.weight }}%</td>
+                  <td>{{ factor.weight.toFixed(1) }}%</td>
                   <td>{{ factor.contribution.toFixed(2) }}</td>
                 </tr>
               </tbody>

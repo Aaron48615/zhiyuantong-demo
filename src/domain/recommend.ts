@@ -1,5 +1,6 @@
 import distribution from "../data/score-distribution-2026.json";
 import { SUBJECTS, WEIGHT_FIELDS } from "./config";
+import { normalizePreferences } from "./preferences";
 import type {
   Dataset,
   Major,
@@ -52,56 +53,32 @@ export function validateProfile(input: unknown): string[] {
     errors.push("专业偏好格式无效");
   if (!["不限", "一线城市", "区域中心城市", "其他城市"].includes(p.cityTier))
     errors.push("城市类别无效");
-  if (!Number.isFinite(p.budget) || p.budget < 5000 || p.budget > 200000)
-    errors.push("年度费用预算须在 5000—200000 元之间");
-  const weights = p.weights;
   if (
-    !weights ||
+    p.advancedEnabled &&
+    p.preferences?.cost > 0 &&
+    (!Number.isFinite(p.budget) || p.budget < 5000 || p.budget > 200000)
+  )
+    errors.push("年度费用预算须在 5000—200000 元之间");
+  if (typeof p.advancedEnabled !== "boolean")
+    errors.push("请设置是否启用进阶偏好");
+  const preferences = p.preferences;
+  if (
+    !preferences ||
     WEIGHT_FIELDS.some(
       ({ key }) =>
-        !Number.isFinite(weights[key]) ||
-        weights[key] < 0 ||
-        weights[key] > 100,
+        !Number.isInteger(preferences[key]) ||
+        preferences[key] < 0 ||
+        preferences[key] > 10,
     )
   )
-    errors.push("每项偏好权重须在 0—100 之间");
+    errors.push("每项重视程度须为 0—10 的整数");
   else if (
-    Math.abs(
-      WEIGHT_FIELDS.reduce((sum, { key }) => sum + weights[key], 0) - 100,
-    ) > 0.01
+    WEIGHT_FIELDS.slice(0, p.advancedEnabled ? 9 : 5).every(
+      ({ key }) => preferences[key] === 0,
+    )
   )
-    errors.push("九项偏好权重之和须为 100%");
+    errors.push("请至少将一项已启用的重视程度设为 1 或以上");
   return errors;
-}
-
-// 修改一项后，将剩余权重按原比例分配；用最大余数法保证整数总和正好是 100。
-export function updateWeight(
-  weights: Weights,
-  key: keyof Weights,
-  input: number,
-): Weights {
-  const value = Math.max(
-    0,
-    Math.min(100, Math.round(Number.isFinite(input) ? input : 0)),
-  );
-  const others = WEIGHT_FIELDS.map((f) => f.key).filter((k) => k !== key);
-  const total = others.reduce((sum, k) => sum + weights[k], 0);
-  const parts = others.map((k) => ({
-    key: k,
-    exact: (100 - value) * (total ? weights[k] / total : 1 / others.length),
-  }));
-  const result = { ...weights, [key]: value };
-  parts.forEach((part) => {
-    result[part.key] = Math.floor(part.exact);
-  });
-  let remaining =
-    100 - value - parts.reduce((sum, part) => sum + result[part.key], 0);
-  parts
-    .sort((a, b) => (b.exact % 1) - (a.exact % 1))
-    .forEach((part) => {
-      if (remaining-- > 0) result[part.key]++;
-    });
-  return result;
 }
 
 export function assessRisk(
@@ -132,6 +109,10 @@ const mean = (values: number[]) =>
 export function recommend(data: Dataset, profile: Profile): Recommendation[] {
   const errors = validateProfile(profile);
   if (errors.length) throw new Error(errors.join("；"));
+  const weights = normalizePreferences(
+    profile.preferences,
+    profile.advancedEnabled,
+  );
   // 上海 2026 普通本科控制线为 403；本原型不处理征求志愿及其他批次。
   if (profile.score < 403) return [];
   const schools = new Map(data.schools.map((school) => [school.id, school]));
@@ -163,26 +144,46 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
         employment: (school.scores[2] + major.scores[4]) / 2,
         publicService: major.publicService,
         innovation: major.innovation,
-        cost: Math.min(
-          100,
-          (profile.budget / (major.tuition + major.livingCost)) * 100,
-        ),
+        cost:
+          weights.cost === 0
+            ? 0
+            : Math.min(
+                100,
+                (profile.budget / (major.tuition + major.livingCost)) * 100,
+              ),
       };
       const factors = WEIGHT_FIELDS.map(({ key, label }) => ({
         key,
         label,
         value: values[key],
-        weight: profile.weights[key],
-        contribution: (values[key] * profile.weights[key]) / 100,
+        weight: weights[key],
+        contribution: (values[key] * weights[key]) / 100,
       }));
       const reasons = [...factors]
-        .filter((f) => f.weight > 0)
+        .filter((f) =>
+          f.weight > 0 &&
+          (f.key !== "region" || profile.regions.length > 0) &&
+          (f.key !== "city" || profile.cityTier !== "不限"),
+        )
         .sort((a, b) => b.contribution - a.contribution)
         .slice(0, 3)
-        .map(
-          (f) =>
-            `${f.label} ${f.value.toFixed(1)} 分 × ${f.weight}% ≈ ${f.contribution.toFixed(1)} 分`,
-        );
+        .map((f) => {
+          if (f.key === "region")
+            return f.value === 100 ? "位于你想去的省市" : "所在省市与你的偏好有差异";
+          if (f.key === "city")
+            return f.value === 100 ? "城市类别符合你的偏好" : "城市类别与你的偏好有差异";
+          if (f.key === "cost")
+            return f.value === 100 ? "学费与生活费在你的预算内" : "学费与生活费超出你的预算";
+          const descriptions = {
+            school: ["学校综合表现较好", "学校综合表现尚可", "学校综合表现仍需权衡"],
+            major: ["专业综合实力较强", "专业综合实力尚可", "专业综合实力仍需权衡"],
+            faculty: ["专业师资匹配度高", "专业师资匹配度较好", "专业师资匹配度仍需权衡"],
+            employment: ["就业质量较高", "就业质量尚可", "就业质量仍需权衡"],
+            publicService: ["考公考编友好度高", "考公考编友好度较好", "考公考编适配情况仍需权衡"],
+            innovation: ["实践与创新机会较多", "实践与创新机会尚可", "实践与创新机会仍需权衡"],
+          };
+          return descriptions[f.key][f.value >= 80 ? 0 : f.value >= 60 ? 1 : 2];
+        });
       const assessment = assessRisk(major, profile);
       return {
         id: major.id,

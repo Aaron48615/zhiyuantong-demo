@@ -19,7 +19,7 @@ flowchart LR
 
 `POST /api/recommendations`
 
-请求为 `{ "profile": Profile }`，完整 Profile 示例见 README。省份、年份、成绩、选科、预算和九项权重在服务端重新校验，非法值返回 400。响应字段：
+请求为 `{ "profile": Profile }`，完整 Profile 示例见 README。省份、年份、成绩、选科、进阶开关和九项 0—10 整数档位在服务端重新校验；费用项启用且档位大于 0 时校验预算。所有启用项均为 0 或输入非法时返回 400。服务端用 preferences 与 advancedEnabled 换算权重，不接受客户端自行指定百分比。响应字段：
 
 | 字段             | 含义                                           |
 | ---------------- | ---------------------------------------------- |
@@ -27,7 +27,7 @@ flowchart LR
 | total            | 推荐总数，可能少于 20；不会用无资格项目凑数    |
 | elapsedMs        | 服务端计算耗时，不含网络和页面渲染             |
 | source           | 当前为 simulated                               |
-| algorithmVersion | 当前为 weighted-v1                             |
+| algorithmVersion | 当前为 independent-preferences-v2                             |
 
 每个推荐包含 `id / school / major / score / risk / riskReason / factors / reasons`。`factors` 保存九项评分、权重和贡献分。风险可为冲、稳、保或数据不足。实际产品建议新增数据版本、政策版本、更新日期、证据记录与置信度字段。
 

@@ -55,7 +55,7 @@ createServer(async (req, res) => {
         total: items.length,
         elapsedMs: Math.round((performance.now() - started) * 100) / 100,
         source: "simulated",
-        algorithmVersion: "weighted-v1",
+        algorithmVersion: "independent-preferences-v2",
       });
     }
     const messages = payload.messages as ChatMessage[];

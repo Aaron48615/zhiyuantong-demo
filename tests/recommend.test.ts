@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { generateDataset } from "../src/data/generate";
 import distribution from "../src/data/score-distribution-2026.json";
-import { createDefaultProfile, WEIGHT_FIELDS } from "../src/domain/config";
+import { createDefaultProfile, PRESETS, WEIGHT_FIELDS } from "../src/domain/config";
 import {
   recommend,
-  updateWeight,
   rankForScore,
   validateProfile,
   assessRisk,
 } from "../src/domain/recommend";
+import { normalizePreferences } from "../src/domain/preferences";
 import { answerFromData } from "../src/domain/assistant";
 
 const data = generateDataset();
@@ -80,12 +80,34 @@ describe("推荐逻辑", () => {
   it("选科是硬约束，地域偏好无法让无资格项目进入结果", () => {
     const profile = createDefaultProfile();
     profile.subjects = ["政治", "历史", "地理"];
-    profile.weights = updateWeight(profile.weights, "region", 100);
+    for (const { key } of WEIGHT_FIELDS) profile.preferences[key] = 0;
+    profile.preferences.region = 10;
     const result = recommend(data, profile);
     expect(result.length).toBe(100);
     expect(result.every((r) => !r.major.requiredSubjects.length)).toBe(true);
     profile.majorNames = ["软件工程"];
     expect(recommend(data, profile)).toEqual([]);
+  });
+  it("推荐理由使用文字，并区分高权重下的优势与不足", () => {
+    const profile = createDefaultProfile();
+    profile.advancedEnabled = true;
+    for (const { key } of WEIGHT_FIELDS) profile.preferences[key] = 0;
+    profile.preferences.publicService = 10;
+    const high = { ...data.majors[0], publicService: 85 };
+    const low = { ...high, id: "low-public-service", publicService: 45 };
+    const results = recommend({ schools: data.schools, majors: [high, low] }, profile);
+    expect(results[0].reasons).toEqual(["考公考编友好度高"]);
+    expect(results[1].reasons).toEqual(["考公考编适配情况仍需权衡"]);
+    expect(results[0].factors.find((f) => f.key === "publicService")?.contribution).toBe(85);
+
+    profile.preferences.publicService = 0;
+    profile.preferences.cost = 10;
+    profile.budget = high.tuition + high.livingCost;
+    expect(recommend({ schools: data.schools, majors: [high] }, profile)[0].reasons)
+      .toEqual(["学费与生活费在你的预算内"]);
+    profile.budget -= 1;
+    expect(recommend({ schools: data.schools, majors: [high] }, profile)[0].reasons)
+      .toEqual(["学费与生活费超出你的预算"]);
   });
   it("低于本科线返回空集，不凑推荐数量", () => {
     const profile = createDefaultProfile();
@@ -106,26 +128,60 @@ describe("推荐逻辑", () => {
         .risk,
     ).toBe("数据不足");
   });
-  it("连续调整九个权重，始终得到0到100的整数且总和为100", () => {
-    let weights = createDefaultProfile().weights;
-    for (const { key } of WEIGHT_FIELDS)
-      for (const value of [100, 0, 99, 37, 1, 50]) {
-        weights = updateWeight(weights, key, value);
-        expect(weights[key]).toBe(value);
-        expect(Object.values(weights).reduce((s, v) => s + v, 0)).toBe(100);
-        expect(
-          Object.values(weights).every(
-            (v) => Number.isInteger(v) && v >= 0 && v <= 100,
-          ),
-        ).toBe(true);
-      }
+  it("默认只换算基础五项，改变停用的进阶档位不影响推荐", () => {
+    const profile = createDefaultProfile();
+    const weights = normalizePreferences(profile.preferences, false);
+    expect(Object.values(weights)).toEqual([20, 20, 20, 20, 20, 0, 0, 0, 0]);
+    const original = recommend(data, profile);
+    profile.preferences.employment = 10;
+    profile.preferences.publicService = 0;
+    profile.preferences.innovation = 1;
+    profile.preferences.cost = 9;
+    profile.budget = NaN;
+    expect(recommend(data, profile)).toEqual(original);
+    profile.advancedEnabled = true;
+    expect(validateProfile(profile).join()).toContain("预算");
+  });
+  it("独立档位换算保留精度，开关进阶不改写原始档位", () => {
+    const profile = createDefaultProfile();
+    profile.preferences.school = 10;
+    const before = { ...profile.preferences };
+    const basic = normalizePreferences(profile.preferences, false);
+    expect(basic.school).toBeCloseTo(100 / 3, 12);
+    expect(basic.region).toBeCloseTo(100 / 6, 12);
+    const advanced = normalizePreferences(profile.preferences, true);
+    expect(advanced.school).toBe(20);
+    expect(advanced.employment).toBe(10);
+    expect(Object.values(advanced).reduce((sum, value) => sum + value, 0)).toBeCloseTo(100, 12);
+    expect(normalizePreferences(profile.preferences, false)).toEqual(basic);
+    expect(profile.preferences).toEqual(before);
+  });
+  it("全零仅按启用项判断，拒绝越界或非整数档位", () => {
+    const profile = createDefaultProfile();
+    for (const { key } of WEIGHT_FIELDS.slice(0, 5)) profile.preferences[key] = 0;
+    expect(validateProfile(profile).join()).toContain("至少");
+    expect(() => recommend(data, profile)).toThrow("至少");
+    profile.advancedEnabled = true;
+    expect(validateProfile(profile)).toEqual([]);
+    for (const value of [-1, 11, 2.5, NaN]) {
+      profile.preferences.employment = value;
+      expect(validateProfile(profile).join()).toContain("0—10");
+    }
+  });
+  it("所有预设合法，就业和费用预设启用进阶，均衡与学校预设关闭", () => {
+    for (const preset of PRESETS) {
+      const profile = { ...createDefaultProfile(), preferences: { ...preset.preferences }, advancedEnabled: preset.advancedEnabled };
+      expect(validateProfile(profile)).toEqual([]);
+      expect(Object.values(normalizePreferences(profile.preferences, profile.advancedEnabled)).reduce((sum, value) => sum + value, 0)).toBeCloseTo(100, 12);
+      expect(preset.advancedEnabled).toBe(["更重视就业", "更重视费用"].includes(preset.name));
+    }
   });
   it("无效请求给出错误，不使用静默默认值替代", () => {
     expect(validateProfile(null).length).toBeGreaterThan(0);
     expect(validateProfile({}).length).toBeGreaterThan(0);
     const profile = createDefaultProfile();
-    profile.weights.cost = 0;
-    expect(() => recommend(data, profile)).toThrow("100%");
+    profile.preferences.cost = 11;
+    expect(() => recommend(data, profile)).toThrow("0—10");
   });
 });
 describe("基础问答", () => {

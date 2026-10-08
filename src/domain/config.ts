@@ -46,60 +46,37 @@ export const MAJOR_DIMENSIONS = [
   "薪资水平",
   "行业认可度",
 ];
-export const DEFAULT_WEIGHTS: Weights = {
-  region: 15,
-  city: 10,
-  school: 15,
-  major: 15,
-  faculty: 10,
-  employment: 15,
+export const DEFAULT_PREFERENCES: Weights = {
+  region: 5,
+  city: 5,
+  school: 5,
+  major: 5,
+  faculty: 5,
+  employment: 5,
   publicService: 5,
   innovation: 5,
-  cost: 10,
+  cost: 5,
 };
-export const PRESETS: { name: string; weights: Weights }[] = [
-  { name: "均衡考虑", weights: DEFAULT_WEIGHTS },
+export const PRESETS: {
+  name: string;
+  preferences: Weights;
+  advancedEnabled: boolean;
+}[] = [
+  { name: "均衡考虑", preferences: DEFAULT_PREFERENCES, advancedEnabled: false },
   {
     name: "更重视就业",
-    weights: {
-      region: 10,
-      city: 5,
-      school: 10,
-      major: 15,
-      faculty: 10,
-      employment: 30,
-      publicService: 5,
-      innovation: 5,
-      cost: 10,
-    },
+    preferences: { ...DEFAULT_PREFERENCES, employment: 10 },
+    advancedEnabled: true,
   },
   {
     name: "更重视学校",
-    weights: {
-      region: 10,
-      city: 5,
-      school: 35,
-      major: 15,
-      faculty: 10,
-      employment: 10,
-      publicService: 5,
-      innovation: 5,
-      cost: 5,
-    },
+    preferences: { ...DEFAULT_PREFERENCES, school: 10 },
+    advancedEnabled: false,
   },
   {
     name: "更重视费用",
-    weights: {
-      region: 10,
-      city: 5,
-      school: 10,
-      major: 15,
-      faculty: 5,
-      employment: 15,
-      publicService: 5,
-      innovation: 5,
-      cost: 30,
-    },
+    preferences: { ...DEFAULT_PREFERENCES, cost: 10 },
+    advancedEnabled: true,
   },
 ];
 export function createDefaultProfile(): Profile {
@@ -113,7 +90,8 @@ export function createDefaultProfile(): Profile {
     cityTier: "不限",
     majorNames: [],
     budget: 30000,
-    weights: { ...DEFAULT_WEIGHTS },
+    preferences: { ...DEFAULT_PREFERENCES },
+    advancedEnabled: false,
   };
 }
 export const OFFICIAL_SOURCES = [

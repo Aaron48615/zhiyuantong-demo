@@ -8,49 +8,53 @@ import {
   WEIGHT_FIELDS,
   createDefaultProfile,
 } from "../domain/config";
-import {
-  rankForScore,
-  updateWeight,
-  validateProfile,
-} from "../domain/recommend";
+import { rankForScore, validateProfile } from "../domain/recommend";
+import { normalizePreferences } from "../domain/preferences";
 import { MAJOR_NAMES, REGIONS } from "../data/generate";
-import type { Profile, WeightKey, Weights } from "../domain/types";
+import type { Profile, WeightKey } from "../domain/types";
 import WeightControl from "../components/WeightControl.vue";
 
 const planner = usePlanner();
 const router = useRouter();
-const draft = reactive<Profile>(JSON.parse(JSON.stringify(planner.profile)));
-const advanced = ref(false);
+const draft = reactive<Omit<Profile, "score"> & { score: number | "" }>({
+  ...JSON.parse(JSON.stringify(planner.profile)),
+  score: planner.hasProfile ? planner.profile.score : "",
+});
 const errors = ref<string[]>([]);
 const errorBox = ref<HTMLElement>();
-const range = computed(() => rankForScore(Number(draft.score)));
-const total = computed(() =>
-  Object.values(draft.weights).reduce((sum, value) => sum + value, 0),
+const range = computed(() =>
+  draft.score === "" ? null : rankForScore(Number(draft.score)),
 );
-const advancedTotal = computed(() =>
-  WEIGHT_FIELDS.slice(5).reduce(
-    (sum, field) => sum + draft.weights[field.key],
-    0,
-  ),
+const activeFields = computed(() =>
+  WEIGHT_FIELDS.slice(0, draft.advancedEnabled ? 9 : 5),
+);
+const total = computed(() =>
+  activeFields.value.reduce((sum, { key }) => sum + draft.preferences[key], 0),
+);
+const preview = computed(() =>
+  normalizePreferences(draft.preferences, draft.advancedEnabled),
 );
 const selectedPreset = computed(
   () =>
-    PRESETS.find((item) =>
-      WEIGHT_FIELDS.every(
-        (field) => item.weights[field.key] === draft.weights[field.key],
-      ),
+    PRESETS.find(
+      (item) =>
+        item.advancedEnabled === draft.advancedEnabled &&
+        WEIGHT_FIELDS.every(
+          (field) => item.preferences[field.key] === draft.preferences[field.key],
+        ),
     )?.name,
 );
 function changeWeight(key: WeightKey, value: number) {
-  draft.weights = updateWeight(draft.weights, key, value);
+  draft.preferences[key] = value;
 }
-function preset(weights: Weights) {
-  draft.weights = { ...weights };
+function preset(item: (typeof PRESETS)[number]) {
+  draft.preferences = { ...item.preferences };
+  draft.advancedEnabled = item.advancedEnabled;
 }
 async function submit() {
   const normalized = {
     ...draft,
-    score: Number(draft.score),
+    score: draft.score === "" ? NaN : Number(draft.score),
     rank:
       draft.rank === null || String(draft.rank) === ""
         ? null
@@ -77,7 +81,7 @@ function reset() {
     <p class="eyebrow">第一步 / 了解你的情况</p>
     <h1>档案与偏好</h1>
     <p class="muted">
-      先确认报考条件，再调整选择的侧重点。档案仅保存在当前浏览器。
+      先确认报考条件，再调整选择的侧重点。
     </p>
   </div>
   <form class="form-layout" @submit.prevent="submit" novalidate>
@@ -126,6 +130,7 @@ function reset() {
             >官方同分区间参考：{{ range.start.toLocaleString() }}—{{
               range.end.toLocaleString()
             }}</small
+          ><small v-else-if="draft.score === ''">填写总分后显示同分区间参考</small
           ><small v-else>当前分数未找到公开本科成绩分布记录</small></label
         >
       </div>
@@ -179,8 +184,7 @@ function reset() {
     <section class="panel">
       <h2>选择你的侧重点</h2>
       <p class="muted small">
-        可先使用预设，再逐项调整。修改一项后，其余八项按比例分配，总和保持
-        100%。
+        各项重视程度独立调整，0 表示不参与，10 表示非常重视。保存时按启用项换算比例。
       </p>
       <div class="chips preset-list">
         <button
@@ -189,7 +193,7 @@ function reset() {
           type="button"
           class="secondary small-button"
           :aria-pressed="selectedPreset === item.name"
-          @click="preset(item.weights)"
+          @click="preset(item)"
         >
           {{ item.name }}
         </button>
@@ -209,28 +213,33 @@ function reset() {
           :id="`weight-${field.key}`"
           :label="field.label"
           :hint="field.hint"
-          :value="draft.weights[field.key]"
+          :value="draft.preferences[field.key]"
+          :weight="preview[field.key]"
           @change="changeWeight(field.key, $event)"
         />
       </div>
     </section>
     <section class="panel advanced-panel">
-      <button
-        class="advanced-toggle"
-        type="button"
-        :aria-expanded="advanced"
-        aria-controls="advanced-settings"
-        @click="advanced = !advanced"
-      >
-        <span
-          ><span class="advanced-title"
-            ><strong>进阶设置</strong
-            ><span class="weight-badge">当前共 {{ advancedTotal }}%</span></span
-          ><small>就业、考公考编、创新与费用</small></span
-        ><span aria-hidden="true">{{ advanced ? "收起 −" : "展开 +" }}</span>
-      </button>
-      <div v-if="advanced" id="advanced-settings" class="advanced-content">
-        <p class="small muted">收起不会停用这些设置，四项权重始终参与计算。</p>
+      <div class="advanced-toggle">
+        <span>
+          <span class="advanced-title">
+            <strong>进阶偏好</strong>
+            <span class="weight-badge">{{ draft.advancedEnabled ? "已启用" : "未启用" }}</span>
+          </span>
+          <small>启用后加入就业、考公考编、创新与费用四项偏好</small>
+        </span>
+        <button
+          class="advanced-switch"
+          type="button"
+          role="switch"
+          aria-label="启用进阶偏好"
+          aria-controls="advanced-settings"
+          :aria-checked="draft.advancedEnabled"
+          @click="draft.advancedEnabled = !draft.advancedEnabled"
+        ><span aria-hidden="true"></span></button>
+      </div>
+      <div v-if="draft.advancedEnabled" id="advanced-settings" class="advanced-content">
+        <p class="small muted">关闭进阶偏好后，这四项不参与计算，设置值会保留。</p>
         <label class="compact-field"
           >年度学费与生活费预算（元）<input
             v-model.number="draft.budget"
@@ -249,15 +258,26 @@ function reset() {
             :id="`weight-${field.key}`"
             :label="field.label"
             :hint="field.hint"
-            :value="draft.weights[field.key]"
+            :value="draft.preferences[field.key]"
+            :weight="preview[field.key]"
             @change="changeWeight(field.key, $event)"
           />
         </div>
       </div>
     </section>
+    <section class="panel preference-preview" aria-label="权重预览">
+      <h2>保存后使用的比例</h2>
+      <p class="small muted">根据当前启用项的重视程度换算，保存后应用到推荐。</p>
+      <div v-if="total > 0" class="preference-preview-grid">
+        <div v-for="field in activeFields" :key="field.key">
+          <span>{{ field.label }}</span><strong>{{ preview[field.key].toFixed(1) }}%</strong>
+        </div>
+      </div>
+      <p v-else class="small">请至少将一项已启用的重视程度设为 1 或以上。</p>
+    </section>
     <div class="form-submit">
       <div class="submit-summary">
-        九项权重合计 <strong>{{ total }}%</strong>
+        已启用 {{ activeFields.length }} 项偏好 <strong>{{ total > 0 ? "100%" : "尚未设置" }}</strong>
       </div>
       <button type="submit">保存并查看推荐 →</button>
     </div>

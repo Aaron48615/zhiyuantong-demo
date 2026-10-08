@@ -16,9 +16,18 @@ export const usePlanner = defineStore("planner", () => {
   const validIds = new Set(dataset.majors.map((m) => m.id));
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
-    if (saved && !validateProfile(saved.profile).length) {
-      profile.value = saved.profile;
-      hasProfile.value = true;
+    if (saved?.profile && typeof saved.profile === "object") {
+      const restored = { ...saved.profile };
+      if (saved.preferenceVersion !== 2) {
+        const defaults = createDefaultProfile();
+        restored.preferences = defaults.preferences;
+        restored.advancedEnabled = false;
+        delete restored.weights;
+      }
+      if (!validateProfile(restored).length) {
+        profile.value = restored;
+        hasProfile.value = true;
+      }
     }
     if (Array.isArray(saved?.savedIds))
       savedIds.value = [
@@ -46,6 +55,7 @@ export const usePlanner = defineStore("planner", () => {
         localStorage.setItem(
           STORAGE_KEY,
           JSON.stringify({
+            preferenceVersion: 2,
             profile: hasProfile.value ? profile.value : null,
             savedIds: savedIds.value,
             compareIds: compareIds.value,
@@ -55,7 +65,7 @@ export const usePlanner = defineStore("planner", () => {
         storageWarning.value = "浏览器无法保存记录，关闭页面后可能丢失。";
       }
     },
-    { deep: true },
+    { deep: true, immediate: true },
   );
   let toastTimer: ReturnType<typeof setTimeout>;
   function notify(message: string) {
