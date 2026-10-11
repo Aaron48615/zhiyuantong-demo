@@ -10,6 +10,41 @@ export type WeightKey =
   | "innovation"
   | "cost";
 export type Weights = Record<WeightKey, number>;
+export type ScoreValue = number | null;
+export interface IndicatorObservation {
+  value: ScoreValue;
+  unit: string;
+  year: number;
+  source: "simulated";
+  sampleSize?: number;
+  missingReason?: string;
+}
+export interface IndicatorResult {
+  id: string;
+  label: string;
+  rawValue: ScoreValue;
+  rawLabel: string;
+  unit: string;
+  year: number | null;
+  sampleSize?: number;
+  sourceLabel: string;
+  normalized: ScoreValue;
+  weight: number;
+  contribution: ScoreValue;
+  rule: string;
+  calculation: string;
+  missingReason: string | null;
+}
+export interface DimensionScore {
+  id: string;
+  label: string;
+  score: ScoreValue;
+  version: string;
+  year: number;
+  indicators: IndicatorResult[];
+  missingReasons: string[];
+}
+export type IndicatorData = Record<string, IndicatorObservation>;
 export type Risk = "冲" | "稳" | "保" | "数据不足";
 export interface Profile {
   province: "上海";
@@ -31,7 +66,9 @@ export interface School {
   province: string;
   tier: string;
   level: string;
-  scores: number[];
+  indicators: IndicatorData;
+  scores: ScoreValue[];
+  scoreDetails: DimensionScore[];
 }
 export interface Major {
   id: string;
@@ -42,9 +79,12 @@ export interface Major {
   requiredSubjects: Subject[];
   tuition: number;
   livingCost: number;
-  scores: number[];
-  publicService: number;
-  innovation: number;
+  indicators: IndicatorData;
+  scores: ScoreValue[];
+  scoreDetails: DimensionScore[];
+  preferenceScoreDetails: DimensionScore[];
+  publicService: ScoreValue;
+  innovation: ScoreValue;
   history: { year: number; minRank: number }[];
   employment: {
     destinations: { name: string; value: number }[];
@@ -62,15 +102,17 @@ export interface Recommendation {
   id: string;
   school: School;
   major: Major;
-  score: number;
+  score: ScoreValue;
+  missingFactors: string[];
   risk: Risk;
   riskReason: string;
   factors: {
     key: WeightKey;
     label: string;
-    value: number;
+    value: ScoreValue;
     weight: number;
-    contribution: number;
+    contribution: ScoreValue;
+    explanation: string;
   }[];
   reasons: string[];
 }

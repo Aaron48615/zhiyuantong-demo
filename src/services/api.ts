@@ -2,6 +2,7 @@ import axios from "axios";
 import { dataset } from "../data/generate";
 import { recommend } from "../domain/recommend";
 import { answerFromData } from "../domain/assistant";
+import { isScore, RECOMMENDATION_VERSION, SCORING_VERSION } from "../domain/scoring";
 import type {
   ChatMessage,
   ChatReply,
@@ -14,12 +15,15 @@ export async function fetchRecommendations(
   profile: Profile,
 ): Promise<{ items: Recommendation[]; mode: "api" | "local" }> {
   try {
-    const { data } = await api.post<{ items: Recommendation[] }>(
+    const { data } = await api.post<{ items: Recommendation[]; algorithmVersion: string; scoringVersion: string }>(
       "/recommendations",
       { profile },
       { timeout: 1800 },
     );
-    if (!Array.isArray(data.items)) throw new Error("Invalid response");
+    if (data.algorithmVersion !== RECOMMENDATION_VERSION || data.scoringVersion !== SCORING_VERSION ||
+      !Array.isArray(data.items) || data.items.some((item) => !item || !Array.isArray(item.missingFactors) ||
+        (item.score !== null && !isScore(item.score)) || !Array.isArray(item.school?.scoreDetails) || !Array.isArray(item.major?.scoreDetails)))
+      throw new Error("评分数据格式或版本不一致");
     return { items: data.items, mode: "api" };
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status === 400)

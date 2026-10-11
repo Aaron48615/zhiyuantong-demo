@@ -204,7 +204,7 @@ function reset() {
           <option>一线城市</option>
           <option>区域中心城市</option>
           <option>其他城市</option></select
-        ><small>原型城市分组，仅用于偏好示例，不是权威城市排名</small></label
+        ><small>原型城市分组，用于偏好评分</small></label
       >
       <div class="weight-grid">
         <WeightControl

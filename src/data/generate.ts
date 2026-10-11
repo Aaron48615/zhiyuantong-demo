@@ -1,4 +1,6 @@
 import type { Dataset, Subject } from "../domain/types";
+import { MAJOR_RULES, PREFERENCE_RULES, SCHOOL_RULES, scoreMajor, scoreSchool } from "../domain/scoring";
+import { generateIndicators } from "./indicators";
 
 // 学校名称与城市用作界面样本；专业设置、专业组、评分、位次和就业均为模拟，不能作为招生事实。
 const schoolRows = [
@@ -112,9 +114,14 @@ export function generateDataset(seed = 2026): Dataset {
     state = (Math.imul(state, 1664525) + 1013904223) >>> 0;
     return state / 4294967296;
   };
-  const score = (base: number) =>
-    Math.max(40, Math.min(98, Math.round(base + random() * 16 - 8)));
-  const schools = schoolRows.map(([name, city, province], index) => ({
+  const schools = schoolRows.map(([name, city, province], index) => {
+    const indicators = generateIndicators(SCHOOL_RULES, `school-${index + 1}`, seed);
+    // 保留可直接浏览的缺失样例，验证列表、图表与评分说明使用同一套处理。
+    if (index === schoolRows.length - 1) {
+      indicators.campusSatisfaction.value = null;
+      indicators.campusSatisfaction.missingReason = "该模拟样本尚未提供校园体验调查";
+    }
+    return scoreSchool({
     id: `school-${index + 1}`,
     name,
     city,
@@ -128,8 +135,8 @@ export function generateDataset(seed = 2026): Dataset {
           ? "区域中心城市"
           : "其他城市",
     level: "本科",
-    scores: Array.from({ length: 8 }, () => score(64 + (index % 7) * 4)),
-  }));
+    indicators,
+  }); });
   const offerings = schools.flatMap((school, schoolIndex) =>
     majors.map((major, majorIndex) => {
       const strength = 62 + ((schoolIndex * 7 + majorIndex * 3) % 28);
@@ -144,7 +151,11 @@ export function generateDataset(seed = 2026): Dataset {
       const employmentRate = 88 + ((strength - 62) % 8);
       const higherStudy = 18 + Math.round((strength - 60) / 3);
       const group = majorIndex < 4 ? "01" : "02";
-      return {
+      const indicators = generateIndicators([...MAJOR_RULES, ...PREFERENCE_RULES], `${school.id}-major-${majorIndex + 1}`, seed);
+      indicators.medianSalary.value = salary - 300;
+      indicators.furtherStudyRate.value = higherStudy + 5;
+      if (schoolIndex === 0 && majorIndex === 5) indicators.medianSalary.sampleSize = 12;
+      return scoreMajor({
         id: `${school.id}-major-${majorIndex + 1}`,
         schoolId: school.id,
         groupId: `${school.id}-demo-${group}`,
@@ -158,9 +169,7 @@ export function generateDataset(seed = 2026): Dataset {
             : school.tier === "区域中心城市"
               ? 18000
               : 14000,
-        scores: Array.from({ length: 6 }, () => score(strength)),
-        publicService: score(major.publicService),
-        innovation: score(strength),
+        indicators,
         history: [2023, 2024, 2025].map((year, i) => ({
           year,
           minRank: Math.round(
@@ -196,7 +205,7 @@ export function generateDataset(seed = 2026): Dataset {
           })),
         },
         source: "simulated" as const,
-      };
+      });
     }),
   );
   return { schools, majors: offerings };

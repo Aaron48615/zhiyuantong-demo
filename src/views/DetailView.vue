@@ -10,6 +10,8 @@ import {
 import { recommend } from "../domain/recommend";
 import { usePlanner } from "../stores/planner";
 import DataChart from "../components/DataChart.vue";
+import ScoreBreakdown from "../components/ScoreBreakdown.vue";
+import { formatScore } from "../domain/scoring";
 const route = useRoute();
 const planner = usePlanner();
 const major = computed(() =>
@@ -41,7 +43,7 @@ const item = computed(() =>
       <div class="detail-overview">
         <div>
           <small>偏好匹配</small
-          ><strong>{{ item ? item.score : "不适用" }}</strong>
+          ><strong>{{ item ? formatScore(item.score, "资料待补") : "不适用" }}</strong>
         </div>
         <div>
           <small>模拟风险分档</small
@@ -91,7 +93,8 @@ const item = computed(() =>
     <section class="panel">
       <h2>推荐理由与风险依据</h2>
       <template v-if="item"
-        ><p v-for="reason in item.reasons" :key="reason" class="small">
+        ><p v-if="item.missingFactors.length" class="missing-score">{{ item.missingFactors.join("、") }}缺少评分依据，暂不合成匹配总分。可以继续查看、比较和保存这项候选。</p>
+        <p v-for="reason in item.reasons" :key="reason" class="small">
           {{ reason }}
         </p>
         <p class="muted small">{{ item.riskReason }}</p>
@@ -109,16 +112,16 @@ const item = computed(() =>
               </thead>
               <tbody>
                 <tr v-for="factor in item.factors" :key="factor.key">
-                  <td>{{ factor.label }}</td>
-                  <td>{{ factor.value.toFixed(1) }}</td>
+                  <td>{{ factor.label }}<small class="factor-explanation">{{ factor.explanation }}</small></td>
+                  <td>{{ formatScore(factor.value) }}</td>
                   <td>{{ factor.weight.toFixed(1) }}%</td>
-                  <td>{{ factor.contribution.toFixed(2) }}</td>
+                  <td>{{ factor.weight === 0 ? '未参与' : factor.contribution === null ? '待补' : factor.contribution.toFixed(2) }}</td>
                 </tr>
               </tbody>
               <tfoot>
                 <tr>
                   <th colspan="3">匹配得分（各贡献分相加，保留一位小数）</th>
-                  <td>{{ item.score }}</td>
+                  <td>{{ formatScore(item.score, '资料待补') }}</td>
                 </tr>
               </tfoot>
             </table>
@@ -132,31 +135,25 @@ const item = computed(() =>
     <div class="two-column">
       <section class="panel">
         <h2>学校八维评分 <small>模拟</small></h2>
+        <p class="small muted">展开任一评分查看原始指标、换算方式和贡献。区间及权重为本项目示例规则。</p>
         <DataChart
           kind="radar"
           :labels="SCHOOL_DIMENSIONS"
           :values="school.scores"
           title="学校评分"
         />
-        <div class="score-list">
-          <span v-for="(label, i) in SCHOOL_DIMENSIONS" :key="label"
-            >{{ label }} <strong>{{ school.scores[i] }}</strong></span
-          >
-        </div>
+        <ScoreBreakdown :scores="school.scoreDetails" prefix="school" />
       </section>
       <section class="panel">
         <h2>专业六维评分 <small>模拟</small></h2>
+        <p class="small muted">各维度按指标计算，综合分取六项平均值。所需资料缺失时保留已有指标。</p>
         <DataChart
           kind="radar"
           :labels="MAJOR_DIMENSIONS"
           :values="major.scores"
           title="专业评分"
         />
-        <div class="score-list">
-          <span v-for="(label, i) in MAJOR_DIMENSIONS" :key="label"
-            >{{ label }} <strong>{{ major.scores[i] }}</strong></span
-          >
-        </div>
+        <ScoreBreakdown :scores="major.scoreDetails" prefix="major" />
       </section>
       <section class="panel">
         <h2>毕业去向分布 <small>模拟</small></h2>
@@ -189,6 +186,11 @@ const item = computed(() =>
       </section>
     </div>
     <section class="panel">
+      <h2>进阶偏好的评分依据 <small>模拟</small></h2>
+      <p class="small muted">考公考编适配与创新机会使用以下指标；是否计入匹配分，取决于档案中的进阶开关及重视程度。</p>
+      <ScoreBreakdown :scores="major.preferenceScoreDetails" prefix="preference" />
+    </section>
+    <section class="panel">
       <h2>典型岗位与地域流向 <small>模拟</small></h2>
       <div class="table-scroll">
         <table>
@@ -219,7 +221,7 @@ const item = computed(() =>
     <section class="panel">
       <h2>历史参考资料</h2>
       <p class="small muted">
-        以下位次是专业级模拟记录，不是官方专业组投档数据。2026
+        以下位次是专业级模拟记录。2026
         年及之后的结果不参与计算。
       </p>
       <div class="table-scroll">
@@ -241,7 +243,7 @@ const item = computed(() =>
         </table>
       </div>
       <details>
-        <summary>官方专业组投档资料（与上述模拟记录分别查看）</summary>
+        <summary>官方专业组投档资料</summary>
         <ul class="source-list">
           <li v-for="source in OFFICIAL_SOURCES.slice(2)" :key="source.url">
             <a :href="source.url" target="_blank" rel="noopener noreferrer"
@@ -250,7 +252,7 @@ const item = computed(() =>
           </li>
         </ul>
         <p class="small muted">
-          需要核实专业组构成是否跨年一致，不能仅凭相同组代码直接比较。官方资料未公布具体专业线时，本系统不会补写真实值。
+          需要核实专业组构成是否跨年一致，不能仅凭相同组代码直接比较。
         </p>
       </details>
     </section>

@@ -4,6 +4,7 @@ import { dataset } from "../data/generate";
 import { recommend } from "../domain/recommend";
 import { SCHOOL_DIMENSIONS, MAJOR_DIMENSIONS } from "../domain/config";
 import { usePlanner } from "../stores/planner";
+import { formatScore, SCHOOL_RULES, MAJOR_RULES } from "../domain/scoring";
 const planner = usePlanner();
 const items = computed(() => {
   const results = recommend(dataset, planner.profile);
@@ -57,8 +58,9 @@ const items = computed(() => {
           <th>偏好匹配</th>
           <td v-for="item in items" :key="item.major.id">
             <strong>{{
-              item.result ? `${item.result.score} 分` : "不符合当前筛选"
+              item.result ? item.result.score === null ? "资料待补" : `${formatScore(item.result.score)} 分` : "不符合当前筛选"
             }}</strong>
+            <p v-if="item.result?.missingFactors.length" class="small muted">{{ item.result.missingFactors.join('、') }}资料不足</p>
           </td>
         </tr>
         <tr>
@@ -99,7 +101,7 @@ const items = computed(() => {
         <tr v-for="(label, i) in SCHOOL_DIMENSIONS" :key="label">
           <th>{{ label }}</th>
           <td v-for="item in items" :key="item.major.id">
-            {{ item.school.scores[i] }}
+            <RouterLink :to="`/major/${item.major.id}#school-${SCHOOL_RULES[i].id}`" :aria-label="`${item.school.name}${label}评分依据`">{{ formatScore(item.school.scores[i]) }}</RouterLink>
           </td>
         </tr>
         <tr>
@@ -109,7 +111,7 @@ const items = computed(() => {
         <tr v-for="(label, i) in MAJOR_DIMENSIONS" :key="label">
           <th>{{ label }}</th>
           <td v-for="item in items" :key="item.major.id">
-            {{ item.major.scores[i] }}
+            <RouterLink :to="`/major/${item.major.id}#major-${MAJOR_RULES[i].id}`" :aria-label="`${item.school.name}${item.major.name}${label}评分依据`">{{ formatScore(item.major.scores[i]) }}</RouterLink>
           </td>
         </tr>
         <tr>

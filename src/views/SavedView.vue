@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { dataset } from "../data/generate";
 import { recommend } from "../domain/recommend";
 import { usePlanner } from "../stores/planner";
+import { formatScore, SCORING_VERSION } from "../domain/scoring";
 const planner = usePlanner();
 const items = computed(() => {
   const results = recommend(dataset, planner.profile);
@@ -19,6 +20,7 @@ function download() {
     title: "智愿通候选清单",
     purpose: "模拟数据演示，非正式志愿表",
     profile: planner.profile,
+    scoringVersion: SCORING_VERSION,
     items: items.value.map(({ school, major }, index) => ({
       order: index + 1,
       school: school.name,
@@ -77,7 +79,7 @@ function download() {
         {{ item.school.city }} · {{ item.major.groupName }} ·
         {{
           item.result
-            ? `匹配 ${item.result.score} 分 / ${item.result.risk}（模拟）`
+            ? item.result.score === null ? `评分资料待补 / ${item.result.risk}（模拟）` : `匹配 ${formatScore(item.result.score)} 分 / ${item.result.risk}（模拟）`
             : "不符合当前档案或专业筛选条件，请重新核对"
         }}
       </p>

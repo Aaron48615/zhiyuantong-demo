@@ -761,6 +761,40 @@ legend {
   font-size: 13px;
   color: var(--text-secondary);
 }
+.dimension-filter {
+  margin-top: 12px;
+  font-size: 13px;
+}
+.dimension-filter summary {
+  cursor: pointer;
+  padding: 9px 0;
+  color: var(--text-secondary);
+}
+.dimension-filter summary span {
+  margin-left: 8px;
+  color: var(--c-accent);
+}
+.dimension-filter-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px auto;
+  align-items: end;
+  gap: 12px;
+  padding-top: 8px;
+}
+.dimension-filter-controls label {
+  min-width: 0;
+  font-size: 13px;
+}
+.dimension-filter p {
+  margin: 8px 0 0;
+}
+.dimension-filter .field-error {
+  color: #b42318;
+}
+.dimension-filter input:disabled {
+  background: var(--bg-subtle);
+  color: var(--text-muted);
+}
 .risk-filters {
   display: flex;
   gap: 8px;
@@ -1119,6 +1153,42 @@ legend {
 .score-list strong {
   color: var(--text-body);
 }
+.two-column:has(.score-breakdown) { align-items: start; }
+.score-breakdown { border-top: 1px solid var(--border-light); }
+.dimension-detail { border-bottom: 1px solid var(--border-light); scroll-margin-top: 28px; }
+.dimension-detail > summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 12px 0;
+  list-style: none;
+  font-size: 14px;
+}
+.dimension-detail > summary::-webkit-details-marker { display: none; }
+.dimension-detail > summary strong { margin-left: auto; font-variant-numeric: tabular-nums; }
+.dimension-detail > summary:hover { color: var(--c-accent); }
+.dimension-detail > summary:focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; border-radius: 3px; }
+.breakdown-toggle { color: var(--text-muted); font-size: 18px; }
+.dimension-detail[open] .breakdown-toggle { transform: rotate(45deg); }
+.dimension-body { padding: 2px 0 16px; }
+.indicator-list { margin: 12px 0; padding: 0; list-style: none; }
+.indicator-list > li { padding: 16px 0; border-top: 1px dashed var(--border-light); }
+.indicator-heading { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; }
+.indicator-heading h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.indicator-heading > span { font-size: 13px; font-variant-numeric: tabular-nums; }
+.indicator-meta, .rule-version { margin: 6px 0; color: var(--text-muted); font-size: 11px; }
+.indicator-rule { margin: 10px 0; color: var(--text-secondary); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.indicator-calculation { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 12px 0 8px; padding: 10px; background: var(--bg-subtle); border-radius: var(--radius-sm); }
+.indicator-calculation dt { font-size: 11px; color: var(--text-muted); }
+.indicator-calculation dd { margin: 4px 0 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+.indicator-equation { margin: 0; font-size: 12px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.dimension-total { padding-top: 12px; border-top: 1px solid var(--border-light); font-size: 13px; line-height: 1.8; }
+.dimension-total small { display: block; margin-top: 4px; color: var(--text-muted); font-size: 11px; }
+.missing-score { color: #8a5817; }
+.match-score.score-incomplete strong { font-family: inherit; font-size: 16px; }
+.factor-explanation { display: block; min-width: 190px; margin-top: 5px; color: var(--text-muted); font-size: 11px; line-height: 1.65; }
+.chart-unavailable { padding: 28px 18px; margin: 20px 0; border: 1px dashed var(--border-medium); border-radius: var(--radius-sm); font-size: 13px; color: var(--text-muted); text-align: center; }
 .table-scroll {
   overflow-x: auto;
 }
@@ -1374,8 +1444,16 @@ body:has(.form-submit) .toast {
   .risk-filter {
     padding: 8px 13px;
   }
-  .filters:has(input:focus, select:focus) {
+  .filters:has(input:focus, select:focus, .dimension-filter[open]) {
     position: static;
+  }
+  .dimension-filter-controls {
+    grid-template-columns: minmax(0, 1fr) 90px;
+    gap: 10px;
+  }
+  .dimension-filter-controls button {
+    grid-column: 1 / -1;
+    justify-self: start;
   }
   .result-card {
     padding: 16px;

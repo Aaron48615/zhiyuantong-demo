@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { Recommendation } from "../domain/types";
 import { usePlanner } from "../stores/planner";
+import { formatScore } from "../domain/scoring";
 defineProps<{ item: Recommendation }>();
 const planner = usePlanner();
 </script>
@@ -25,9 +26,9 @@ const planner = usePlanner();
           </h3>
           <p class="major-name">{{ item.major.name }}</p>
         </div>
-        <div class="match-score">
-          <strong>{{ item.score }}</strong
-          ><span>偏好匹配 / 100</span>
+        <div class="match-score" :class="{ 'score-incomplete': item.score === null }">
+          <strong>{{ formatScore(item.score, "资料待补") }}</strong
+          ><span>{{ item.score === null ? "符合当前条件" : "偏好匹配 / 100" }}</span>
         </div>
       </div>
       <div class="card-criteria">
@@ -59,7 +60,10 @@ const planner = usePlanner();
           ></span
         >
       </div>
-      <p v-if="item.reasons.length" class="reason">
+      <p v-if="item.missingFactors.length" class="reason">
+        {{ item.missingFactors.join("、") }}资料不足，可进入详情查看已有指标。
+      </p>
+      <p v-else-if="item.reasons.length" class="reason">
         推荐理由：{{ item.reasons[0] }}
       </p>
     </div>

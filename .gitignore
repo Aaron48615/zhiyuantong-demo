@@ -13,3 +13,4 @@ playwright-report/
 output/playwright/
 .idea/
 .vscode/
+.codex-artifacts/

@@ -1,13 +1,15 @@
 import distribution from "../data/score-distribution-2026.json";
 import { SUBJECTS, WEIGHT_FIELDS } from "./config";
 import { normalizePreferences } from "./preferences";
+import { compareScoresDescending, isScore, meanScore, scoreMajor, scoreSchool } from "./scoring";
 import type {
   Dataset,
   Major,
   Profile,
   Recommendation,
   Risk,
-  Weights,
+  ScoreValue,
+  WeightKey,
 } from "./types";
 
 export function rankForScore(score: number) {
@@ -99,12 +101,9 @@ export function assessRisk(
   const risk = ratio <= 0.85 ? "保" : ratio <= 1.05 ? "稳" : "冲";
   return {
     risk,
-    reason: `以${profile.rank ? "填写的" : "同分区间末位"}位次 ${rank.toLocaleString("zh-CN")}，对照前三年模拟专业录取位次中位数 ${reference.toLocaleString("zh-CN")}；比值 ${ratio.toFixed(2)}。≤0.85 为保，≤1.05 为稳，其余为冲。这是演示分档规则，不代表真实录取概率。`,
+    reason: `以${profile.rank ? "填写的" : "同分区间末位"}位次 ${rank.toLocaleString("zh-CN")}，对照前三年模拟专业录取位次中位数 ${reference.toLocaleString("zh-CN")}；比值 ${ratio.toFixed(2)}。≤0.85 为保，≤1.05 为稳，其余为冲。`,
   };
 }
-
-const mean = (values: number[]) =>
-  values.reduce((sum, value) => sum + value, 0) / values.length;
 
 export function recommend(data: Dataset, profile: Profile): Recommendation[] {
   const errors = validateProfile(profile);
@@ -115,7 +114,7 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
   );
   // 上海 2026 普通本科控制线为 403；本原型不处理征求志愿及其他批次。
   if (profile.score < 403) return [];
-  const schools = new Map(data.schools.map((school) => [school.id, school]));
+  const schools = new Map(data.schools.map((school) => [school.id, scoreSchool(school)]));
   return data.majors
     .filter((major) =>
       major.requiredSubjects.every((subject) =>
@@ -126,10 +125,11 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
       (major) =>
         !profile.majorNames.length || profile.majorNames.includes(major.name),
     )
-    .map((major) => {
+    .map((rawMajor) => {
+      const major = scoreMajor(rawMajor);
       const school = schools.get(major.schoolId);
       if (!school) throw new Error(`专业 ${major.id} 关联的学校不存在`);
-      const values: Weights = {
+      const values: Record<WeightKey, ScoreValue> = {
         region:
           !profile.regions.length || profile.regions.includes(school.province)
             ? 100
@@ -138,10 +138,10 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
           profile.cityTier === "不限" || profile.cityTier === school.tier
             ? 100
             : 40,
-        school: mean(school.scores),
-        major: mean(major.scores),
+        school: meanScore(school.scores, 8),
+        major: meanScore(major.scores, 6),
         faculty: major.scores[2],
-        employment: (school.scores[2] + major.scores[4]) / 2,
+        employment: meanScore([school.scores[2], major.scores[4]], 2),
         publicService: major.publicService,
         innovation: major.innovation,
         cost:
@@ -152,20 +152,33 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
                 (profile.budget / (major.tuition + major.livingCost)) * 100,
               ),
       };
+      const explanations: Record<WeightKey, string> = {
+        region: !profile.regions.length ? "未限制省市，按100分计算" : "符合意向省市得100分，其他省市得30分",
+        city: profile.cityTier === "不限" ? "未限制城市类别，按100分计算" : "符合城市类别得100分，其他类别得40分",
+        school: "学校八项评分的平均值；任一项资料缺失时暂无综合分",
+        major: "专业六项评分的平均值；任一项资料缺失时暂无综合分",
+        faculty: "采用本专业的师资匹配度评分",
+        employment: "学校就业质量与专业薪资评分的平均值",
+        publicService: "岗位专业要求匹配比例×70%＋可匹配岗位类别覆盖率×30%",
+        innovation: "实践项目参与比例×60%＋创新训练机会覆盖率×40%",
+        cost: weights.cost === 0 ? "费用偏好未启用" : `年度预算${profile.budget}÷年度费用${major.tuition + major.livingCost}×100，最高100分`,
+      };
       const factors = WEIGHT_FIELDS.map(({ key, label }) => ({
         key,
         label,
         value: values[key],
         weight: weights[key],
-        contribution: (values[key] * weights[key]) / 100,
+        contribution: weights[key] === 0 ? 0 : values[key] === null ? null : (values[key]! * weights[key]) / 100,
+        explanation: explanations[key],
       }));
+      const missingFactors = factors.filter((factor) => factor.weight > 0 && !isScore(factor.value)).map((factor) => factor.label);
       const reasons = [...factors]
         .filter((f) =>
-          f.weight > 0 &&
+          f.weight > 0 && isScore(f.value) &&
           (f.key !== "region" || profile.regions.length > 0) &&
           (f.key !== "city" || profile.cityTier !== "不限"),
         )
-        .sort((a, b) => b.contribution - a.contribution)
+        .sort((a, b) => (b.contribution ?? 0) - (a.contribution ?? 0))
         .slice(0, 3)
         .map((f) => {
           if (f.key === "region")
@@ -182,21 +195,21 @@ export function recommend(data: Dataset, profile: Profile): Recommendation[] {
             publicService: ["考公考编友好度高", "考公考编友好度较好", "考公考编适配情况仍需权衡"],
             innovation: ["实践与创新机会较多", "实践与创新机会尚可", "实践与创新机会仍需权衡"],
           };
-          return descriptions[f.key][f.value >= 80 ? 0 : f.value >= 60 ? 1 : 2];
+          return descriptions[f.key][f.value! >= 80 ? 0 : f.value! >= 60 ? 1 : 2];
         });
       const assessment = assessRisk(major, profile);
       return {
         id: major.id,
         school,
         major,
-        score:
-          Math.round(factors.reduce((sum, f) => sum + f.contribution, 0) * 10) /
-          10,
+        score: missingFactors.length ? null :
+          Math.round(factors.reduce((sum, f) => sum + (f.contribution ?? 0), 0) * 10) / 10,
+        missingFactors,
         risk: assessment.risk,
         riskReason: assessment.reason,
         factors,
         reasons,
       };
     })
-    .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
+    .sort((a, b) => compareScoresDescending(a.score, b.score) || a.id.localeCompare(b.id));
 }

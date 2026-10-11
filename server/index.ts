@@ -3,6 +3,7 @@ import { dataset } from "../src/data/generate";
 import { recommend, validateProfile } from "../src/domain/recommend";
 import { answerFromData } from "../src/domain/assistant";
 import type { ChatMessage, Profile } from "../src/domain/types";
+import { RECOMMENDATION_VERSION, SCORING_VERSION } from "../src/domain/scoring";
 
 const port = Number(process.env.API_PORT || 3001);
 let activeModelCalls = 0;
@@ -55,7 +56,8 @@ createServer(async (req, res) => {
         total: items.length,
         elapsedMs: Math.round((performance.now() - started) * 100) / 100,
         source: "simulated",
-        algorithmVersion: "independent-preferences-v2",
+        algorithmVersion: RECOMMENDATION_VERSION,
+        scoringVersion: SCORING_VERSION,
       });
     }
     const messages = payload.messages as ChatMessage[];

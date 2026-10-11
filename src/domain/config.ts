@@ -1,4 +1,5 @@
 import type { Profile, Subject, WeightKey, Weights } from "./types";
+import { SCHOOL_RULES, MAJOR_RULES } from "./scoring";
 
 export const SUBJECTS: Subject[] = [
   "物理",
@@ -28,24 +29,8 @@ export const WEIGHT_FIELDS: { key: WeightKey; label: string; hint: string }[] =
     { key: "innovation", label: "创新能力", hint: "实践与创新机会的示例评分" },
     { key: "cost", label: "学费与生活成本", hint: "年度费用是否在你的预算内" },
   ];
-export const SCHOOL_DIMENSIONS = [
-  "学术声誉",
-  "教学质量",
-  "就业质量",
-  "硬件设施",
-  "师资力量",
-  "国际化程度",
-  "校园文化",
-  "发展潜力",
-];
-export const MAJOR_DIMENSIONS = [
-  "专业实力",
-  "课程设置",
-  "师资匹配度",
-  "深造支持",
-  "薪资水平",
-  "行业认可度",
-];
+export const SCHOOL_DIMENSIONS = SCHOOL_RULES.map((rule) => rule.label);
+export const MAJOR_DIMENSIONS = MAJOR_RULES.map((rule) => rule.label);
 export const DEFAULT_PREFERENCES: Weights = {
   region: 5,
   city: 5,

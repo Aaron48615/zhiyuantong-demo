@@ -65,16 +65,21 @@ describe("推荐逻辑", () => {
       new Set(["冲", "稳", "保"]),
     );
     for (let i = 0; i < items.length; i++) {
+      if (items[i].score === null) {
+        expect(items[i].missingFactors.length).toBeGreaterThan(0);
+        expect(items.slice(i).every((item) => item.score === null)).toBe(true);
+        continue;
+      }
       expect(items[i].score).toBeGreaterThanOrEqual(0);
       expect(items[i].score).toBeLessThanOrEqual(100);
       expect(items[i].score).toBeCloseTo(
         items[i].factors.reduce(
-          (sum, f) => sum + (f.value * f.weight) / 100,
+          (sum, f) => sum + (f.contribution ?? 0),
           0,
         ),
         0,
       );
-      if (i) expect(items[i - 1].score).toBeGreaterThanOrEqual(items[i].score);
+      if (i) expect(items[i - 1].score).toBeGreaterThanOrEqual(items[i].score!);
     }
   });
   it("选科是硬约束，地域偏好无法让无资格项目进入结果", () => {
@@ -93,8 +98,13 @@ describe("推荐逻辑", () => {
     profile.advancedEnabled = true;
     for (const { key } of WEIGHT_FIELDS) profile.preferences[key] = 0;
     profile.preferences.publicService = 10;
-    const high = { ...data.majors[0], publicService: 85 };
-    const low = { ...high, id: "low-public-service", publicService: 45 };
+    const high = structuredClone(data.majors[0]);
+    high.indicators.publicJobMatch.value = 85;
+    high.indicators.publicJobCoverage.value = 85;
+    const low = structuredClone(high);
+    low.id = "low-public-service";
+    low.indicators.publicJobMatch.value = 45;
+    low.indicators.publicJobCoverage.value = 45;
     const results = recommend({ schools: data.schools, majors: [high, low] }, profile);
     expect(results[0].reasons).toEqual(["考公考编友好度高"]);
     expect(results[1].reasons).toEqual(["考公考编适配情况仍需权衡"]);

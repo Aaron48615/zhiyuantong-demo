@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref, watch } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
+import type { ScoreValue } from "../domain/types";
+import { formatScore } from "../domain/scoring";
 import {
   init,
   use,
@@ -29,13 +31,18 @@ use([
 const props = defineProps<{
   kind: "radar" | "pie" | "line";
   labels: string[];
-  values: number[];
+  values: ScoreValue[];
   title: string;
 }>();
 const element = ref<HTMLElement>();
+const complete = computed(() => props.labels.length === props.values.length && props.values.length > 0 && props.values.every((value) => typeof value === 'number' && Number.isFinite(value)));
 let chart: EChartsType | undefined;
 let observer: ResizeObserver | undefined;
 function render() {
+  if (!complete.value) { chart?.clear(); return; }
+  if (!element.value?.clientWidth || !element.value.clientHeight) return;
+  chart ??= init(element.value);
+  chart.resize();
   const option: EChartsCoreOption = {
     color: [
       "#142a4a",
@@ -98,13 +105,16 @@ function render() {
 }
 onMounted(() => {
   if (element.value) {
-    chart = init(element.value);
     render();
-    observer = new ResizeObserver(() => chart?.resize());
+    observer = new ResizeObserver(() => {
+      if (!complete.value) return;
+      if (chart) chart.resize();
+      else render();
+    });
     observer.observe(element.value);
   }
 });
-watch(() => [props.labels, props.values, props.kind], render, { deep: true });
+watch(() => [props.labels, props.values, props.kind], render, { deep: true, flush: "post" });
 onBeforeUnmount(() => {
   observer?.disconnect();
   chart?.dispose();
@@ -112,9 +122,11 @@ onBeforeUnmount(() => {
 </script>
 <template>
   <div
+    v-show="complete"
     ref="element"
     class="data-chart"
     role="img"
-    :aria-label="`${title}：${labels.map((label, i) => `${label} ${values[i]}`).join('，')}`"
+    :aria-label="`${title}：${labels.map((label, i) => `${label} ${formatScore(values[i])}`).join('，')}`"
   ></div>
+  <p v-if="!complete" class="chart-unavailable">部分评分资料待补，下方保留已有指标。补齐后显示完整图表。</p>
 </template>

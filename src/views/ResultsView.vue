@@ -3,7 +3,8 @@ import { computed, nextTick, ref, watch } from "vue";
 import { usePlanner } from "../stores/planner";
 import { fetchRecommendations } from "../services/api";
 import { SCHOOL_DIMENSIONS, MAJOR_DIMENSIONS } from "../domain/config";
-import type { Recommendation } from "../domain/types";
+import type { Recommendation, Risk } from "../domain/types";
+import { filterResults, sortResults, SCORE_FILTER_DIMENSIONS, scoreFilterError } from "../domain/result-filters";
 import ResultCard from "../components/ResultCard.vue";
 import { dataset } from "../data/generate";
 const planner = usePlanner();
@@ -12,8 +13,19 @@ const loading = ref(false);
 const error = ref("");
 const mode = ref("api");
 const query = ref("");
-const risk = ref("全部");
+const risk = ref<Risk | "全部">("全部");
+const risks: (Risk | "全部")[] = ["全部", "冲", "稳", "保", "数据不足"];
 const order = ref("match");
+const scoreDimension = ref("");
+const minimumScore = ref<number | string>(80);
+const scoreError = computed(() => scoreFilterError(scoreDimension.value, minimumScore.value));
+const scoreFilterLabel = computed(() =>
+  SCORE_FILTER_DIMENSIONS.find((item) => item.key === scoreDimension.value)?.label,
+);
+function clearScoreFilter() {
+  scoreDimension.value = "";
+  minimumScore.value = 80;
+}
 const page = ref(1);
 const pageSize = 20;
 const filtersElement = ref<HTMLElement>();
@@ -38,37 +50,17 @@ async function load() {
   }
 }
 watch(() => planner.profile, load, { deep: true, immediate: true });
-watch([query, risk, order], () => {
+watch([query, risk, order, scoreDimension, minimumScore], () => {
   page.value = 1;
 });
 const filtered = computed(() => {
-  const result = items.value
-    .filter((item) =>
-      `${item.school.name}${item.major.name}${item.school.city}`.includes(
-        query.value.trim(),
-      ),
-    )
-    .filter((item) => risk.value === "全部" || item.risk === risk.value);
-  return result.sort((a, b) => {
-    if (order.value === "cost")
-      return (
-        a.major.tuition +
-        a.major.livingCost -
-        b.major.tuition -
-        b.major.livingCost
-      );
-    if (order.value.startsWith("school-"))
-      return (
-        b.school.scores[Number(order.value.slice(7))] -
-        a.school.scores[Number(order.value.slice(7))]
-      );
-    if (order.value.startsWith("major-"))
-      return (
-        b.major.scores[Number(order.value.slice(6))] -
-        a.major.scores[Number(order.value.slice(6))]
-      );
-    return b.score - a.score;
+  const result = filterResults(items.value, {
+    query: query.value,
+    risk: risk.value,
+    dimension: scoreDimension.value,
+    minimum: minimumScore.value,
   });
+  return sortResults(result, order.value);
 });
 const totalPages = computed(() => Math.max(1, Math.ceil(filtered.value.length / pageSize)));
 const visible = computed(() =>
@@ -113,7 +105,7 @@ const compared = computed(() =>
     <RouterLink class="text-button" to="/profile">调整偏好 →</RouterLink>
   </div>
   <div v-if="mode === 'local'" class="notice" role="status">
-    当前使用本地计算，API 服务未连接。
+    当前使用本地样本计算，接口暂不可用或评分规则已更新。
   </div>
   <section ref="filtersElement" class="filters" aria-label="筛选推荐">
     <div class="filter-controls">
@@ -148,10 +140,39 @@ const compared = computed(() =>
         </select></label
       >
     </div>
+    <details class="dimension-filter">
+      <summary>
+        按维度最低分筛选
+        <span v-if="scoreFilterLabel && !scoreError">{{ scoreFilterLabel }} ≥ {{ minimumScore }} 分</span>
+        <span v-else-if="scoreError">请修正分数</span>
+        <span v-else>可选</span>
+      </summary>
+      <div class="dimension-filter-controls">
+        <label>评分维度
+          <select v-model="scoreDimension" aria-describedby="score-filter-hint">
+            <option value="">不限制维度分数</option>
+            <optgroup label="学校维度">
+              <option v-for="(label, index) in SCHOOL_DIMENSIONS" :key="label" :value="`school-${index}`">{{ label }}</option>
+            </optgroup>
+            <optgroup label="专业维度">
+              <option v-for="(label, index) in MAJOR_DIMENSIONS" :key="label" :value="`major-${index}`">{{ label }}</option>
+            </optgroup>
+          </select>
+        </label>
+        <label>最低分
+          <input v-model.number="minimumScore" type="number" min="0" max="100" step="1"
+            :disabled="!scoreDimension" :aria-invalid="!!scoreError"
+            :aria-describedby="scoreError ? 'score-filter-error score-filter-hint' : 'score-filter-hint'" />
+        </label>
+        <button type="button" class="secondary" :disabled="!scoreDimension" @click="clearScoreFilter">清除分数条件</button>
+      </div>
+      <p id="score-filter-hint" class="muted">使用当前模拟评分，可与搜索和风险分档同时筛选；不改变偏好权重。</p>
+      <p v-if="scoreError" id="score-filter-error" class="field-error" role="alert">{{ scoreError }}</p>
+    </details>
     <div class="filter-footer">
       <div class="risk-filters" role="group" aria-label="风险分档">
       <button
-        v-for="value in ['全部', '冲', '稳', '保', '数据不足']"
+        v-for="value in risks"
         :key="value"
         type="button"
         class="risk-filter"
@@ -192,6 +213,11 @@ const compared = computed(() =>
     <p role="alert">{{ error }}</p>
     <button @click="load">重新加载</button>
   </div>
+  <div v-else-if="scoreError" class="empty-state">
+    <h2>请修正维度筛选条件</h2>
+    <p>输入 0—100 的整数，或清除分数条件后继续查看推荐。</p>
+    <button type="button" class="secondary" @click="clearScoreFilter">清除分数条件</button>
+  </div>
   <template v-else>
     <div class="row between result-summary">
       <p>
@@ -205,9 +231,10 @@ const compared = computed(() =>
         {{
           planner.profile.score < 403
             ? "当前分数低于上海 2026 年普通本科控制线 403 分，本原型不覆盖专科或征求志愿。"
-            : "可以尝试清空搜索、切换风险分档或调整意向专业。选科要求不会因偏好设置而放宽。"
+            : "可以尝试清空搜索、降低维度最低分、切换风险分档或调整意向专业。选科要求不会因偏好设置而放宽。"
         }}
       </p>
+      <button v-if="scoreDimension" type="button" class="secondary" @click="clearScoreFilter">清除分数条件</button>
       <RouterLink class="button secondary" to="/profile"
         >检查档案与偏好</RouterLink
       >

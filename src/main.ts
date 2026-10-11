@@ -6,7 +6,7 @@ import "./styles.css";
 
 const router = createRouter({
   history: createWebHashHistory(),
-  scrollBehavior: () => ({ top: 0 }),
+  scrollBehavior: (to) => to.hash ? { el: to.hash, top: 24 } : { top: 0 },
   routes: [
     {
       path: "/",

@@ -67,7 +67,7 @@ async function send(question = input.value) {
     <div v-if="!messages.length" class="chat-welcome">
       <h2>从一个具体问题开始</h2>
       <p class="muted">
-        可以继续追问同一所学校或专业。涉及模拟数据时，回答会明确说明。
+        可以继续追问同一所学校或专业。
       </p>
       <div class="suggestions">
         <button
