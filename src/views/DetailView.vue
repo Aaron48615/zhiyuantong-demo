@@ -33,11 +33,8 @@ const item = computed(() =>
       </p>
       <h1>{{ school.name }}</h1>
       <p class="detail-major">
-        {{ major.name }} <span class="tag">模拟专业样本</span>
+        {{ major.name }}
       </p>
-    </div>
-    <div class="notice">
-      专业是否开设、专业组构成、评分、就业及历史专业位次均为演示数据，未核实该校实际招生计划。正式报考须核对当年招生章程与专业目录。
     </div>
     <section class="panel">
       <div class="detail-overview">
@@ -46,7 +43,7 @@ const item = computed(() =>
           ><strong>{{ item ? formatScore(item.score, "资料待补") : "不适用" }}</strong>
         </div>
         <div>
-          <small>模拟风险分档</small
+          <small>风险分档</small
           ><strong>{{ item?.risk ?? "不在当前筛选内" }}</strong>
         </div>
         <div>
@@ -129,13 +126,13 @@ const item = computed(() =>
         </details></template
       >
       <p v-else>
-        该项目不符合当前选科、意向专业或普通本科分数条件，不显示个性化匹配分。仍可浏览资料样本。
+        该项目不符合当前选科、意向专业或普通本科分数条件，不显示个性化匹配分。仍可浏览专业资料。
       </p>
     </section>
     <div class="two-column">
       <section class="panel">
-        <h2>学校八维评分 <small>模拟</small></h2>
-        <p class="small muted">展开任一评分查看原始指标、换算方式和贡献。区间及权重为本项目示例规则。</p>
+        <h2>学校八维评分</h2>
+        <p class="small muted">展开任一评分查看原始指标、换算方式和贡献。</p>
         <DataChart
           kind="radar"
           :labels="SCHOOL_DIMENSIONS"
@@ -145,7 +142,7 @@ const item = computed(() =>
         <ScoreBreakdown :scores="school.scoreDetails" prefix="school" />
       </section>
       <section class="panel">
-        <h2>专业六维评分 <small>模拟</small></h2>
+        <h2>专业六维评分</h2>
         <p class="small muted">各维度按指标计算，综合分取六项平均值。所需资料缺失时保留已有指标。</p>
         <DataChart
           kind="radar"
@@ -156,7 +153,7 @@ const item = computed(() =>
         <ScoreBreakdown :scores="major.scoreDetails" prefix="major" />
       </section>
       <section class="panel">
-        <h2>毕业去向分布 <small>模拟</small></h2>
+        <h2>毕业去向分布</h2>
         <DataChart
           kind="pie"
           :labels="major.employment.destinations.map((d) => d.name)"
@@ -173,7 +170,7 @@ const item = computed(() =>
         </div>
       </section>
       <section class="panel">
-        <h2>近三年去向落实率 <small>模拟</small></h2>
+        <h2>近三年去向落实率</h2>
         <DataChart
           kind="line"
           :labels="major.employment.trend.map((t) => String(t.year))"
@@ -181,23 +178,23 @@ const item = computed(() =>
           title="毕业去向落实率"
         />
         <p class="small muted">
-          本示例将就业与升学均计入去向落实率，与毕业去向中的待就业比例相对应。此口径不等于只统计参加工作的就业率。
+          就业与升学均计入去向落实率，与毕业去向中的待就业比例相对应。此口径不等于只统计参加工作的就业率。
         </p>
       </section>
     </div>
     <section class="panel">
-      <h2>进阶偏好的评分依据 <small>模拟</small></h2>
+      <h2>进阶偏好的评分依据</h2>
       <p class="small muted">考公考编适配与创新机会使用以下指标；是否计入匹配分，取决于档案中的进阶开关及重视程度。</p>
       <ScoreBreakdown :scores="major.preferenceScoreDetails" prefix="preference" />
     </section>
     <section class="panel">
-      <h2>典型岗位与地域流向 <small>模拟</small></h2>
+      <h2>典型岗位与地域流向</h2>
       <div class="table-scroll">
         <table>
           <thead>
             <tr>
               <th>典型岗位</th>
-              <th>示例月起薪</th>
+              <th>参考月起薪</th>
               <th>主要行业</th>
             </tr>
           </thead>
@@ -221,7 +218,7 @@ const item = computed(() =>
     <section class="panel">
       <h2>历史参考资料</h2>
       <p class="small muted">
-        以下位次是专业级模拟记录。2026
+        以下为专业参考位次。2026
         年及之后的结果不参与计算。
       </p>
       <div class="table-scroll">
@@ -229,15 +226,13 @@ const item = computed(() =>
           <thead>
             <tr>
               <th>年份</th>
-              <th>示例最低录取位次</th>
-              <th>来源</th>
+              <th>参考最低录取位次</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="history in major.history" :key="history.year">
               <td>{{ history.year }}</td>
               <td>{{ history.minRank.toLocaleString() }}</td>
-              <td>模拟生成</td>
             </tr>
           </tbody>
         </table>
@@ -258,7 +253,7 @@ const item = computed(() =>
     </section>
   </template>
   <div v-else class="empty-state">
-    <h1>没有找到这个专业样本</h1>
+    <h1>没有找到这个专业</h1>
     <RouterLink class="button" to="/recommendations">返回推荐列表</RouterLink>
   </div>
 </template>

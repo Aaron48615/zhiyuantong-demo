@@ -68,7 +68,7 @@ export const SCHOOL_RULES: DimensionRule[] = [
 ];
 export const MAJOR_RULES: DimensionRule[] = [
   { id: "strength", label: "专业实力", indicators: [
-    { id: "subjectLevel", label: "学科评价示例档位", unit: "档", weight: 60, lower: 1, upper: 5,
+    { id: "subjectLevel", label: "学科评价档位", unit: "档", weight: 60, lower: 1, upper: 5,
       levels: [1, 2, 3, 4, 5].map((value) => ({ value, label: `${value}档`, score: value * 20 })) },
     accreditation(40),
   ] },

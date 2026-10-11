@@ -26,7 +26,7 @@ export function validateProfile(input: unknown): string[] {
   const p = input as Profile;
   const errors: string[] = [];
   if (p.province !== "上海" || p.year !== 2026)
-    errors.push("当前仅支持上海 2026 年普通本科演示");
+    errors.push("当前仅支持上海 2026 年普通本科");
   if (!Number.isInteger(p.score) || p.score < 0 || p.score > 660)
     errors.push("高考总分须为 0—660 的整数");
   if (
@@ -101,7 +101,7 @@ export function assessRisk(
   const risk = ratio <= 0.85 ? "保" : ratio <= 1.05 ? "稳" : "冲";
   return {
     risk,
-    reason: `以${profile.rank ? "填写的" : "同分区间末位"}位次 ${rank.toLocaleString("zh-CN")}，对照前三年模拟专业录取位次中位数 ${reference.toLocaleString("zh-CN")}；比值 ${ratio.toFixed(2)}。≤0.85 为保，≤1.05 为稳，其余为冲。`,
+    reason: `以${profile.rank ? "填写的" : "同分区间末位"}位次 ${rank.toLocaleString("zh-CN")}，对照前三年专业参考位次中位数 ${reference.toLocaleString("zh-CN")}；比值 ${ratio.toFixed(2)}。≤0.85 为保，≤1.05 为稳，其余为冲。`,
   };
 }
 

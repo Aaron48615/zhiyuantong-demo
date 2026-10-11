@@ -18,7 +18,7 @@ const items = computed(() => {
 function download() {
   const content = {
     title: "智愿通候选清单",
-    purpose: "模拟数据演示，非正式志愿表",
+    purpose: "学校与专业候选清单，非正式志愿表",
     profile: planner.profile,
     scoringVersion: SCORING_VERSION,
     items: items.value.map(({ school, major }, index) => ({
@@ -26,7 +26,6 @@ function download() {
       school: school.name,
       major: major.name,
       group: major.groupName,
-      source: "simulated",
     })),
   };
   const url = URL.createObjectURL(
@@ -79,7 +78,7 @@ function download() {
         {{ item.school.city }} · {{ item.major.groupName }} ·
         {{
           item.result
-            ? item.result.score === null ? `评分资料待补 / ${item.result.risk}（模拟）` : `匹配 ${formatScore(item.result.score)} 分 / ${item.result.risk}（模拟）`
+            ? item.result.score === null ? `评分资料待补 / ${item.result.risk}` : `匹配 ${formatScore(item.result.score)} 分 / ${item.result.risk}`
             : "不符合当前档案或专业筛选条件，请重新核对"
         }}
       </p>

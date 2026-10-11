@@ -24,9 +24,9 @@ export const WEIGHT_FIELDS: { key: WeightKey; label: string; hint: string }[] =
     {
       key: "publicService",
       label: "考公考编友好度",
-      hint: "专业岗位适配的示例评分",
+      hint: "专业岗位适配评分",
     },
-    { key: "innovation", label: "创新能力", hint: "实践与创新机会的示例评分" },
+    { key: "innovation", label: "创新能力", hint: "实践与创新机会评分" },
     { key: "cost", label: "学费与生活成本", hint: "年度费用是否在你的预算内" },
   ];
 export const SCHOOL_DIMENSIONS = SCHOOL_RULES.map((rule) => rule.label);

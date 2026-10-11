@@ -119,7 +119,7 @@ export function generateDataset(seed = 2026): Dataset {
     // 保留可直接浏览的缺失样例，验证列表、图表与评分说明使用同一套处理。
     if (index === schoolRows.length - 1) {
       indicators.campusSatisfaction.value = null;
-      indicators.campusSatisfaction.missingReason = "该模拟样本尚未提供校园体验调查";
+      indicators.campusSatisfaction.missingReason = "缺少校园体验调查";
     }
     return scoreSchool({
     id: `school-${index + 1}`,
@@ -159,7 +159,7 @@ export function generateDataset(seed = 2026): Dataset {
         id: `${school.id}-major-${majorIndex + 1}`,
         schoolId: school.id,
         groupId: `${school.id}-demo-${group}`,
-        groupName: `示例专业组 ${group}`,
+        groupName: `专业组 ${group}`,
         name: major.name,
         requiredSubjects: major.subjects as Subject[],
         tuition: majorIndex === 1 ? 7000 : 6000,

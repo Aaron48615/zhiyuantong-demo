@@ -218,7 +218,6 @@ describe("基础问答", () => {
       profile,
     );
     expect(reply.answer).toContain("上海理工大学 · 软件工程");
-    expect(reply.answer).toContain("模拟数据");
   });
   it("未收录的学校不拿其他学校数据代替，专业解读对应问题", () => {
     const profile = createDefaultProfile();

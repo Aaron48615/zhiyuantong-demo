@@ -105,7 +105,7 @@ const compared = computed(() =>
     <RouterLink class="text-button" to="/profile">调整偏好 →</RouterLink>
   </div>
   <div v-if="mode === 'local'" class="notice" role="status">
-    当前使用本地样本计算，接口暂不可用或评分规则已更新。
+    当前使用本地计算，接口暂不可用或评分规则已更新。
   </div>
   <section ref="filtersElement" class="filters" aria-label="筛选推荐">
     <div class="filter-controls">
@@ -166,7 +166,7 @@ const compared = computed(() =>
         </label>
         <button type="button" class="secondary" :disabled="!scoreDimension" @click="clearScoreFilter">清除分数条件</button>
       </div>
-      <p id="score-filter-hint" class="muted">使用当前模拟评分，可与搜索和风险分档同时筛选；不改变偏好权重。</p>
+      <p id="score-filter-hint" class="muted">使用当前评分，可与搜索和风险分档同时筛选；不改变偏好权重。</p>
       <p v-if="scoreError" id="score-filter-error" class="field-error" role="alert">{{ scoreError }}</p>
     </details>
     <div class="filter-footer">
@@ -226,11 +226,11 @@ const compared = computed(() =>
       <span class="muted">每页 20 项 · 第 {{ page }} / {{ totalPages }} 页</span>
     </div>
     <div v-if="!filtered.length" class="empty-state">
-      <h2>没有符合当前条件的样本</h2>
+      <h2>没有符合当前条件的专业</h2>
       <p>
         {{
           planner.profile.score < 403
-            ? "当前分数低于上海 2026 年普通本科控制线 403 分，本原型不覆盖专科或征求志愿。"
+            ? "当前分数低于上海 2026 年普通本科控制线 403 分，当前不覆盖专科或征求志愿。"
             : "可以尝试清空搜索、降低维度最低分、切换风险分档或调整意向专业。选科要求不会因偏好设置而放宽。"
         }}
       </p>

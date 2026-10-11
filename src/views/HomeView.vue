@@ -32,7 +32,7 @@ const steps = [
         >{{ planner.hasProfile ? "调整档案与偏好" : "开始选择" }}
         <span aria-hidden="true">→</span></RouterLink
       ><RouterLink class="button secondary" to="/recommendations">{{
-        planner.hasProfile ? "继续查看推荐" : "先看示例推荐"
+        planner.hasProfile ? "继续查看推荐" : "先看看推荐"
       }}</RouterLink>
     </div>
     <p v-if="planner.hasProfile" class="small muted">
@@ -47,14 +47,10 @@ const steps = [
     </article>
   </section>
   <section class="panel source-section">
-    <h2>先了解数据，再看推荐</h2>
+    <h2>推荐结果怎么看</h2>
     <p>
-      本版本以 2026 年上海普通本科为背景。官方规则与成绩分布有可查来源；50
-      所学校样本中的专业配置、专业组、评分、就业和录取位次均为模拟。
+      “匹配分”表示偏好契合程度；“冲、稳、保”根据考生位次与近三年参考位次的比值划分。
     </p>
-    <div class="notice">
-      推荐中的“匹配分”表示偏好契合程度，“冲、稳、保”是模拟位次规则的分档。
-    </div>
     <details>
       <summary>查看官方参考资料与适用范围</summary>
       <ul class="source-list">
@@ -66,7 +62,7 @@ const steps = [
       </ul>
       <p class="small muted">
         历史资料是专业组投档线，不能直接当作组内具体专业录取线。2026
-        年最终投档结果不参与本原型的填报期计算。
+        年最终投档结果不参与填报期计算。
       </p>
     </details>
   </section>

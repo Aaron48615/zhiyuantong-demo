@@ -36,8 +36,6 @@ export function answerFromData(
       (!majorName || r.major.name === majorName),
   );
   const base = { mode: "rules" as const, sources: [] as ChatReply["sources"] };
-  const disclaimer =
-    "\n\n数据来源：项目模拟数据。";
 
   if (/政策|平行志愿|投档|调剂|选科|24个|4个/.test(question)) {
     return {
@@ -56,7 +54,7 @@ export function answerFromData(
       ...base,
       category: "数据范围",
       answer:
-        "当前问题中的学校不在这 50 所演示学校样本内，无法提供对应的专业、薪资或录取判断。请查看该校官方招生资料，或选择样本库内的学校进行功能体验。",
+        "当前问题中的学校不在已收录的学校中，暂时无法提供对应的专业、薪资或录取资料。请查看该校官方招生资料。",
     };
   }
   if (/评分|得分|怎么算|评分依据/.test(question) && selected) {
@@ -65,8 +63,8 @@ export function answerFromData(
     return {
       ...base, category: "评分依据",
       answer: dimension
-        ? `${selected.school.name} · ${selected.major.name}\n${dimension.label}：${formatScore(dimension.score)}。\n${dimension.indicators.map((item) => `${item.label}：${item.rawLabel}${['档', '状态'].includes(item.unit) ? '' : item.unit}；${item.rule}；${item.calculation}`).join('\n')}\n统计年份：${dimension.year}。原始指标及换算规则均为项目模拟样例。`
-        : `当前偏好匹配：${formatScore(selected.score, '资料待补')}。\n${selected.factors.filter((item) => item.weight > 0).map((item) => `${item.label}：${formatScore(item.value)}，权重${item.weight.toFixed(1)}%，${item.contribution === null ? '资料待补' : `贡献${item.contribution.toFixed(2)}分`}。${item.explanation}`).join('\n')}\n可以继续询问“教学质量评分怎么算”，或在详情页展开各维度。数据与评分规则均为模拟样例。`,
+        ? `${selected.school.name} · ${selected.major.name}\n${dimension.label}：${formatScore(dimension.score)}。\n${dimension.indicators.map((item) => `${item.label}：${item.rawLabel}${['档', '状态'].includes(item.unit) ? '' : item.unit}；${item.rule}；${item.calculation}`).join('\n')}\n统计年份：${dimension.year}。`
+        : `当前偏好匹配：${formatScore(selected.score, '资料待补')}。\n${selected.factors.filter((item) => item.weight > 0).map((item) => `${item.label}：${formatScore(item.value)}，权重${item.weight.toFixed(1)}%，${item.contribution === null ? '资料待补' : `贡献${item.contribution.toFixed(2)}分`}。${item.explanation}`).join('\n')}\n可以继续询问“教学质量评分怎么算”，或在详情页展开各维度。`,
     };
   }
   if (/区别|学什么|课程|解读/.test(question)) {
@@ -99,17 +97,17 @@ export function answerFromData(
         ...base,
         category: "就业前景",
         answer:
-          "目前选科和专业筛选条件下没有找到对应的可推荐样本。你可以在院校资料中查看信息，或先调整专业方向。",
+          "目前选科和专业筛选条件下没有找到对应的专业。你可以在院校资料中查看信息，或先调整专业方向。",
       };
     return {
       ...base,
       category: "就业前景",
-      answer: `${selected.school.name} · ${selected.major.name}的示例岗位：\n${selected.major.employment.jobs.map((job) => `${job.name}：月起薪约 ${job.salary} 元，行业为${job.industry}`).join("\n")}\n\n示例主要去向为${selected.major.employment.regions
+      answer: `${selected.school.name} · ${selected.major.name}的典型岗位：\n${selected.major.employment.jobs.map((job) => `${job.name}：月起薪约 ${job.salary} 元，行业为${job.industry}`).join("\n")}\n\n主要去向为${selected.major.employment.regions
         .slice(0, 3)
         .map((r) => `${r.name} ${r.value}%`)
         .join(
           "、",
-        )}。${disclaimer}`,
+        )}。`,
     };
   }
   if (/趋势|三年|位次变化|数据分析/.test(question)) {
@@ -118,13 +116,13 @@ export function answerFromData(
         ...base,
         category: "数据分析",
         answer:
-          "没有找到符合当前条件的学校专业样本。请给出样本库内的学校或专业名称。",
+          "没有找到符合当前条件的学校或专业。请核对名称，或调整筛选条件。",
       };
     return {
       ...base,
       category: "数据分析",
       sources: OFFICIAL_SOURCES.slice(2),
-      answer: `${selected.school.name} · ${selected.major.name}的模拟专业录取位次为：\n${selected.major.history.map((h) => `${h.year} 年：${h.minRank}`).join("\n")}\n\n数字越小，通常意味着位次要求越靠前。官方公开参考资料是院校专业组投档线，不能直接当成组内该专业录取线，跨年专业组构成也需要核实。`,
+      answer: `${selected.school.name} · ${selected.major.name}的专业参考位次为：\n${selected.major.history.map((h) => `${h.year} 年：${h.minRank}`).join("\n")}\n\n数字越小，通常意味着位次要求越靠前。官方公开参考资料是院校专业组投档线，不能直接当成组内该专业录取线，跨年专业组构成也需要核实。`,
     };
   }
   if (/够|能上|录取|风险|为什么|推荐这/.test(question)) {
@@ -133,12 +131,12 @@ export function answerFromData(
         ...base,
         category: "择校建议",
         answer:
-          "没有找到符合当前选科和意向专业条件的对应样本。请核对名称和选科要求。",
+          "没有找到符合当前选科和意向专业条件的专业。请核对名称和选科要求。",
       };
     return {
       ...base,
       category: "择校建议",
-      answer: `${selected.school.name} · ${selected.major.name}：偏好匹配 ${formatScore(selected.score, "资料待补")}，示例风险分档为“${selected.risk}”。\n\n${selected.riskReason}\n\n主要得分来源：${selected.reasons.join("；")}。偏好匹配高不等于录取机会高。${disclaimer}`,
+      answer: `${selected.school.name} · ${selected.major.name}：偏好匹配 ${formatScore(selected.score, "资料待补")}，风险分档为“${selected.risk}”。\n\n${selected.riskReason}\n\n主要得分来源：${selected.reasons.join("；")}。偏好匹配高不等于录取机会高。`,
     };
   }
   if (/推荐|偏好|南方|城市|喜欢|费用|预算/.test(question)) {
@@ -164,8 +162,8 @@ export function answerFromData(
       ...base,
       category: "偏好推荐",
       answer: items.length
-        ? `按本次问题和当前档案，先比较以下示例：\n${items.map((r, i) => `${i + 1}. ${r.school.name} · ${r.major.name}：匹配 ${formatScore(r.score, "资料待补")}，${r.risk}`).join("\n")}\n\n这次查询没有修改已保存的偏好。若希望长期应用这些条件，请到“档案与偏好”调整。${disclaimer}`
-        : "当前条件下没有可推荐的样本，请检查选科、专业方向和本科分数要求。",
+        ? `按本次问题和当前档案，先比较以下选择：\n${items.map((r, i) => `${i + 1}. ${r.school.name} · ${r.major.name}：匹配 ${formatScore(r.score, "资料待补")}，${r.risk}`).join("\n")}\n\n这次查询没有修改已保存的偏好。若希望长期应用这些条件，请到“档案与偏好”调整。`
+        : "当前条件下没有可推荐的专业，请检查选科、专业方向和本科分数要求。",
     };
   }
   return {

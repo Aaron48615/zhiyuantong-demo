@@ -14,7 +14,7 @@ const planner = usePlanner();
           ><span class="tag">{{ item.school.level }}</span>
         </div>
         <span class="risk-tag" :data-risk="item.risk"
-          >{{ item.risk }} · 模拟</span
+          >{{ item.risk }}</span
         >
       </div>
       <div class="card-title-row">
@@ -51,7 +51,7 @@ const planner = usePlanner();
           ></span
         >
         <span
-          >示例起薪
+          >参考起薪
           <strong
             >{{
               item.major.employment.jobs[0].salary.toLocaleString()

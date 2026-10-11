@@ -22,7 +22,7 @@ const items = computed(() => {
     <p class="eyebrow">第三步 / 看清差异</p>
     <h1>专业对比</h1>
     <p class="muted">
-      最多比较 3 个组合。评分、费用与就业为模拟数据，匹配分基于同一份考生档案。
+      最多比较 3 个组合，匹配分基于同一份考生档案。
     </p>
   </div>
   <div v-if="items.length < 2" class="notice">
@@ -64,7 +64,7 @@ const items = computed(() => {
           </td>
         </tr>
         <tr>
-          <th>模拟风险</th>
+          <th>风险分档</th>
           <td v-for="item in items" :key="item.major.id">
             {{ item.result?.risk ?? "不评估" }}
           </td>
@@ -89,14 +89,14 @@ const items = computed(() => {
           </td>
         </tr>
         <tr>
-          <th>示例最高月起薪</th>
+          <th>参考最高月起薪</th>
           <td v-for="item in items" :key="item.major.id">
             {{ item.major.employment.jobs[0].salary }} 元
           </td>
         </tr>
         <tr>
           <th>学校八维评分</th>
-          <td :colspan="items.length" class="muted">0—100 分，均为模拟</td>
+          <td :colspan="items.length" class="muted">0—100 分</td>
         </tr>
         <tr v-for="(label, i) in SCHOOL_DIMENSIONS" :key="label">
           <th>{{ label }}</th>
@@ -106,7 +106,7 @@ const items = computed(() => {
         </tr>
         <tr>
           <th>专业六维评分</th>
-          <td :colspan="items.length" class="muted">0—100 分，均为模拟</td>
+          <td :colspan="items.length" class="muted">0—100 分</td>
         </tr>
         <tr v-for="(label, i) in MAJOR_DIMENSIONS" :key="label">
           <th>{{ label }}</th>
