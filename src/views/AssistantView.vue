@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import { usePlanner } from "../stores/planner";
 import { sendChat } from "../services/api";
 import type { ChatMessage, ChatReply } from "../domain/types";
+import PageHelp from "../components/PageHelp.vue";
 const planner = usePlanner();
 const route = useRoute();
 const input = ref(String(route.query.question ?? ""));
@@ -63,6 +64,7 @@ async function send(question = input.value) {
     基础问答可以直接使用；配置服务端 DeepSeek
     后，模型会结合检索到的数据组织回答。提问时会发送当前档案与最近对话，回答会标注实际模式。本轮对话在离开此页面后清空。
   </div>
+  <PageHelp page="assistant" />
   <section class="panel chat-panel">
     <div v-if="!messages.length" class="chat-welcome">
       <h2>从一个具体问题开始</h2>

@@ -326,11 +326,25 @@ small {
 .hero .actions {
   margin-bottom: 15px;
 }
+.home-how-to {
+  margin-top: 32px;
+  margin-bottom: 28px;
+}
+.home-how-to > h2 {
+  margin-bottom: 20px;
+}
 .step-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 18px;
-  margin: 15px 0;
+  margin: 0;
+}
+.step-grid .panel {
+  margin-bottom: 0;
+}
+.step-grid h3 {
+  margin: 0 0 10px;
+  font-size: 18px;
 }
 .step-grid p {
   font-size: 14px;
@@ -343,6 +357,57 @@ small {
 }
 .source-section p {
   max-width: 870px;
+}
+.risk-method p {
+  font-size: 14px;
+  margin: 10px 0;
+}
+.page-help {
+  margin: 0 0 24px;
+  padding: 0 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.page-help > summary {
+  min-height: var(--touch-target);
+  padding: 13px 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+.page-help[open] > summary {
+  color: var(--text-heading);
+  border-bottom: 1px solid var(--border);
+}
+.page-help-content {
+  padding: 4px 0 18px;
+}
+.help-terms {
+  margin: 0;
+}
+.help-terms > div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 20px;
+  padding: 14px 0;
+}
+.help-terms > div + div {
+  border-top: 1px solid var(--border);
+}
+.help-terms dt {
+  color: var(--text-heading);
+  font-size: 14px;
+  font-weight: 600;
+}
+.help-terms dd {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--text-secondary);
+}
+.page-help-content h2 {
+  font-size: 16px;
+  margin-top: 20px;
 }
 .notice {
   border: 1px solid var(--border);
@@ -1361,6 +1426,20 @@ body:has(.form-submit) .toast {
     gap: 12px;
     margin-top: 0;
     margin-bottom: 22px;
+  }
+  .home-how-to {
+    margin-top: 24px;
+    margin-bottom: 24px;
+  }
+  .step-grid h3 {
+    font-size: 17px;
+  }
+  .help-terms > div {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 5px;
+  }
+  .page-help {
+    padding: 0 14px;
   }
   .step-grid .panel {
     margin: 0;

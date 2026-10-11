@@ -1,31 +1,31 @@
 <script setup lang="ts">
 import { OFFICIAL_SOURCES } from "../domain/config";
 import { usePlanner } from "../stores/planner";
+import RiskGuide from "../components/RiskGuide.vue";
 const planner = usePlanner();
 const steps = [
   {
     number: "01",
-    title: "填写你的情况",
-    description: "输入成绩和选科，再说说你看重什么。",
+    title: "填写档案",
+    description: "填写成绩、选科和个人偏好。",
   },
   {
     number: "02",
-    title: "查看匹配理由",
-    description: "分别看偏好匹配与风险分档，理解每项得分。",
+    title: "查看推荐",
+    description: "了解匹配理由与风险分档。",
   },
   {
     number: "03",
-    title: "比较并保留候选",
-    description: "并排比较学校、专业和费用，整理自己的选择。",
+    title: "整理候选",
+    description: "比较学校与专业，保留意向选择。",
   },
 ];
 </script>
 <template>
   <section class="hero">
-    <p class="eyebrow">面向上海普通本科考生</p>
-    <h1>从你的偏好出发，<br />找到值得比较的选择。</h1>
+    <h1>志愿报考辅助系统</h1>
     <p class="hero-copy">
-      学校、专业、城市和费用，很难只用一个排名决定。先筛选符合选科要求的专业，再看看哪些选择更符合你的想法。
+      结合成绩、选科和个人偏好，辅助你筛选学校与专业。
     </p>
     <div class="actions">
       <RouterLink class="button" to="/profile"
@@ -39,20 +39,22 @@ const steps = [
       当前档案：{{ planner.summary }}
     </p>
   </section>
-  <section class="step-grid" aria-label="使用流程">
-    <article v-for="step in steps" :key="step.number" class="panel">
-      <span class="step-number">{{ step.number }}</span>
-      <h2>{{ step.title }}</h2>
-      <p class="muted">{{ step.description }}</p>
-    </article>
+  <section class="home-how-to" aria-labelledby="how-to-title">
+    <h2 id="how-to-title">怎么使用这个系统？</h2>
+    <div class="step-grid">
+      <article v-for="step in steps" :key="step.number" class="panel">
+        <span class="step-number">{{ step.number }}</span>
+        <h3>{{ step.title }}</h3>
+        <p class="muted">{{ step.description }}</p>
+      </article>
+    </div>
   </section>
   <section class="panel source-section">
-    <h2>推荐结果怎么看</h2>
-    <p>
-      “匹配分”表示偏好契合程度；“冲、稳、保”根据考生位次与近三年参考位次的比值划分。
-    </p>
+    <h2>推荐说明</h2>
+    <p>匹配分表示学校与专业有多符合你的偏好。“冲、稳、保”含义如下：</p>
+    <RiskGuide />
     <details>
-      <summary>查看官方参考资料与适用范围</summary>
+      <summary>官方资料与适用范围</summary>
       <ul class="source-list">
         <li v-for="source in OFFICIAL_SOURCES" :key="source.url">
           <a :href="source.url" target="_blank" rel="noopener noreferrer"

@@ -11,6 +11,7 @@ import { recommend } from "../domain/recommend";
 import { usePlanner } from "../stores/planner";
 import DataChart from "../components/DataChart.vue";
 import ScoreBreakdown from "../components/ScoreBreakdown.vue";
+import PageHelp from "../components/PageHelp.vue";
 import { formatScore } from "../domain/scoring";
 const route = useRoute();
 const planner = usePlanner();
@@ -36,6 +37,7 @@ const item = computed(() =>
         {{ major.name }}
       </p>
     </div>
+    <PageHelp page="detail" />
     <section class="panel">
       <div class="detail-overview">
         <div>

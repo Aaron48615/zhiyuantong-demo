@@ -4,6 +4,7 @@ import { dataset } from "../data/generate";
 import { recommend } from "../domain/recommend";
 import { usePlanner } from "../stores/planner";
 import { formatScore, SCORING_VERSION } from "../domain/scoring";
+import PageHelp from "../components/PageHelp.vue";
 const planner = usePlanner();
 const items = computed(() => {
   const results = recommend(dataset, planner.profile);
@@ -54,6 +55,7 @@ function download() {
       备份。
     </p>
   </div>
+  <PageHelp page="saved" />
   <div class="notice">
     这是学校与专业的收藏清单，不是正式志愿表。上海正式填报须按院校专业组组织组内专业，并明确调剂选项。
   </div>

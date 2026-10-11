@@ -13,6 +13,7 @@ import { normalizePreferences } from "../domain/preferences";
 import { MAJOR_NAMES, REGIONS } from "../data/generate";
 import type { Profile, WeightKey } from "../domain/types";
 import WeightControl from "../components/WeightControl.vue";
+import PageHelp from "../components/PageHelp.vue";
 
 const planner = usePlanner();
 const router = useRouter();
@@ -84,6 +85,7 @@ function reset() {
       先确认报考条件，再调整选择的侧重点。
     </p>
   </div>
+  <PageHelp page="profile" />
   <form class="form-layout" @submit.prevent="submit" novalidate>
     <div
       v-if="errors.length"

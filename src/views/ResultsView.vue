@@ -6,6 +6,7 @@ import { SCHOOL_DIMENSIONS, MAJOR_DIMENSIONS } from "../domain/config";
 import type { Recommendation, Risk } from "../domain/types";
 import { filterResults, sortResults, SCORE_FILTER_DIMENSIONS, scoreFilterError } from "../domain/result-filters";
 import ResultCard from "../components/ResultCard.vue";
+import PageHelp from "../components/PageHelp.vue";
 import { dataset } from "../data/generate";
 const planner = usePlanner();
 const items = ref<Recommendation[]>([]);
@@ -107,6 +108,7 @@ const compared = computed(() =>
   <div v-if="mode === 'local'" class="notice" role="status">
     当前使用本地计算，接口暂不可用或评分规则已更新。
   </div>
+  <PageHelp page="results" />
   <section ref="filtersElement" class="filters" aria-label="筛选推荐">
     <div class="filter-controls">
       <label

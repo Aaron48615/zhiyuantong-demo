@@ -5,6 +5,7 @@ import { recommend } from "../domain/recommend";
 import { SCHOOL_DIMENSIONS, MAJOR_DIMENSIONS } from "../domain/config";
 import { usePlanner } from "../stores/planner";
 import { formatScore, SCHOOL_RULES, MAJOR_RULES } from "../domain/scoring";
+import PageHelp from "../components/PageHelp.vue";
 const planner = usePlanner();
 const items = computed(() => {
   const results = recommend(dataset, planner.profile);
@@ -25,6 +26,7 @@ const items = computed(() => {
       最多比较 3 个组合，匹配分基于同一份考生档案。
     </p>
   </div>
+  <PageHelp page="compare" />
   <div v-if="items.length < 2" class="notice">
     {{
       items.length
