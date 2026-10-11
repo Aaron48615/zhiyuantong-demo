@@ -14,3 +14,6 @@ output/playwright/
 .idea/
 .vscode/
 .codex-artifacts/
+
+# 产品方案仅在本地维护
+/docs/product-plan.md

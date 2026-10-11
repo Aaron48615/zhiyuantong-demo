@@ -92,7 +92,6 @@ npm run data:generate   # 一键生成 var/demo-data.json
 
 ## 文档
 
-- [产品方案与阶段安排](docs/product-plan.md)
 - [接口与后端职责](docs/backend-contract.md)
 - [代码阅读与演示说明](docs/walkthrough.md)
 - [页面需求与样式调整范围](docs/page-spec.md)
